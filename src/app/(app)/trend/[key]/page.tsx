@@ -141,7 +141,7 @@ function Headline({ vm, href }: { vm: TrendViewVM; href: (o: { r?: TrendViewRang
               <ChevronLeft strokeWidth={2.5} className="size-5" />
             </span>
           )}
-          <span className="font-numeric text-[13px] leading-4 font-bold tracking-[0.06em] whitespace-nowrap uppercase tabular-nums">{vm.period}</span>
+          <span className="font-numeric text-[13px] leading-4 font-medium tracking-normal whitespace-nowrap tabular-nums">{vm.period}</span>
           {vm.offset > 0 ? (
             <Link href={href({ p: vm.offset - 1 })} replace scroll={false} aria-label="Next period" className={arrow}>
               <ChevronRight aria-hidden strokeWidth={2.5} className="size-5" />

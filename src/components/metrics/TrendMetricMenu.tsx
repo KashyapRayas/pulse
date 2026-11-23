@@ -22,7 +22,7 @@ export function TrendMetricMenu({ current, options }: { current: string; options
         <span aria-hidden className={ICON}>
           {on.icon}
         </span>
-        <span className="min-w-0 flex-1 truncate text-[15px] leading-5 font-bold tracking-[0.08em] uppercase">{on.label}</span>
+        <span className="min-w-0 flex-1 truncate text-[15px] leading-5 font-medium tracking-normal">{on.label}</span>
         <span className="sr-only">Change metric</span>
         <ChevronDown aria-hidden strokeWidth={2.25} className="size-5 shrink-0 transition-[rotate] duration-200 ease-standard group-data-[state=open]/menu:rotate-180" />
       </DropdownMenuTrigger>

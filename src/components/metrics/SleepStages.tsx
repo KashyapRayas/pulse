@@ -109,7 +109,7 @@ function Rows({ night, selected, onSelect, restorative }: { night: SleepStagesNi
             aria-selected={tab === id}
             onClick={() => setTab(id)}
             className={cn(
-              "grid h-10 flex-1 place-items-center rounded-md text-[13px] font-bold tracking-[0.1em] uppercase outline-none transition-[background-color,color] duration-150 ease-standard focus-visible:ring-3 focus-visible:ring-ring/50",
+              "grid h-10 flex-1 place-items-center rounded-md text-[13px] font-medium tracking-normal outline-none transition-[background-color,color] duration-150 ease-standard focus-visible:ring-3 focus-visible:ring-ring/50",
               tab === id ? "bg-secondary text-foreground" : "text-muted-foreground hover:text-foreground"
             )}
           >

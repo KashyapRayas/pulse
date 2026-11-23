@@ -39,7 +39,7 @@ export type KeyStatRowProps = {
   className?: string
 }
 
-const TILE_LABEL = "text-[10px] leading-3 font-bold tracking-[0.1em] uppercase"
+const TILE_LABEL = "text-[10px] leading-3 font-medium tracking-normal"
 const TILE_CHIP = "min-h-5 px-1.5 py-0.5 text-[11px] leading-4"
 const STATUS_ACTIVE: Record<SleepStatus, string> = {
   poor: "bg-warning",

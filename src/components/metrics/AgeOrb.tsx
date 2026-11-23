@@ -375,7 +375,7 @@ export function AgeOrb({ age, deltaYears, provisional = false, size: sizeProp, r
         </span>
         <span
           className={cn(
-            "font-bold tracking-[0.1em] text-(--orb-text-muted) uppercase motion-safe:delay-300",
+            "font-medium tracking-normal text-(--orb-text-muted) motion-safe:delay-300",
             small ? "mt-0.5 text-[max(9px,calc(var(--s)*0.09))] leading-none" : "mt-1.5 text-[calc(7px+var(--s)*0.023)] leading-tight",
             !compact && ENTER
           )}

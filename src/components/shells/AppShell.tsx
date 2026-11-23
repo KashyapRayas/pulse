@@ -2,6 +2,7 @@ import { AppLifecycle } from "./AppLifecycle"
 import { Suspense } from "react"
 import { AppNavigationProvider } from "./AppNavigation"
 import { AppNav } from "./AppNav"
+import { CommandMenu } from "./CommandMenu"
 import { ShellStatusProvider, type ShellStatus } from "./ShellStatus"
 
 export type AppShellProps = {
@@ -24,6 +25,8 @@ export function AppShell({ status, live = false, children }: AppShellProps) {
           </a>
           {/* DOM order puts navigation directly after the skip link for keyboard users. */}
           <AppNav />
+          {/* Linear's keyboard layer: ⌘K command menu, "G then …" navigation, "C" to check in, "?" for shortcuts. */}
+          <CommandMenu />
           <AppLifecycle />
           {/* Clip horizontal overflow without creating a scroll container that breaks sticky headers. */}
           <main

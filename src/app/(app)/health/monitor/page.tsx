@@ -76,7 +76,7 @@ function Count({ count }: { count: MonitorVM["count"] }) {
         {v ? v.inRange : "--"}
         <span className="text-[0.55em] text-foreground-secondary">/{v?.total ?? 5}</span>
       </p>
-      <p aria-hidden className="text-xs leading-4 font-bold tracking-[0.1em] uppercase">
+      <p aria-hidden className="text-xs leading-4 font-medium tracking-normal">
         Metrics within range
       </p>
       {chip && <StatusChip tone={chip.tone}>{chip.text()}</StatusChip>}

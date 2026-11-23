@@ -13,7 +13,7 @@ const noSubscribe = () => () => {}
 
 const FIELD =
   "h-13 w-full min-w-0 rounded-xl bg-field px-4 text-[17px] leading-6 text-foreground tabular-nums outline-none transition-[box-shadow] duration-150 ease-standard placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-foreground/70 aria-invalid:ring-2 aria-invalid:ring-recovery-red-text"
-const LABEL = "text-xs leading-4 font-bold tracking-[0.1em] text-foreground-secondary uppercase"
+const LABEL = "text-xs leading-4 font-medium tracking-normal text-foreground-secondary"
 const HINT = "text-[13px] leading-[18px] text-muted-foreground text-pretty"
 const ERROR = "text-[13px] leading-[18px] font-medium text-recovery-red-text"
 
@@ -77,7 +77,7 @@ export function ProfileForm({
 
       <fieldset className="flex flex-col gap-2" aria-describedby={f?.sex ? "sex-error" : "sex-hint"}>
         <legend className={cn(LABEL, "mb-2")}>Sex</legend>
-        <div className="grid grid-cols-2 gap-1 rounded-[14px] bg-field p-1">
+        <div className="grid grid-cols-2 gap-1 rounded-lg bg-field p-1">
           {(["male", "female"] as const).map((v) => (
             <label key={v} className="relative">
               <input type="radio" name="sex" value={v} defaultChecked={defaults.sex === v} required className="peer sr-only" />
@@ -128,7 +128,7 @@ export function ProfileForm({
       {!onboarding && (
         <fieldset className="flex flex-col gap-2" aria-describedby={f?.timeFormat ? "timeFormat-error" : "timeFormat-hint"}>
           <legend className={cn(LABEL, "mb-2")}>Time format</legend>
-          <div className="grid grid-cols-2 gap-1 rounded-[14px] bg-field p-1">
+          <div className="grid grid-cols-2 gap-1 rounded-lg bg-field p-1">
             {(["24", "12"] as const).map((v) => (
               <label key={v} className="relative">
                 <input type="radio" name="timeFormat" value={v} defaultChecked={(defaults.timeFormat ?? "24") === v} className="peer sr-only" />

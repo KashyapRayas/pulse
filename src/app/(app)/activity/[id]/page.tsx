@@ -108,7 +108,7 @@ export default async function ActivityPage({ params }: PageProps<"/activity/[id]
   )
 }
 
-const STAT_LABEL = "text-xs leading-4 font-bold tracking-[0.1em] text-foreground-secondary uppercase"
+const STAT_LABEL = "text-xs leading-4 font-medium tracking-normal text-foreground-secondary"
 /** The profile, where max heart rate (and so the zones) is set. */
 const HR_SETTINGS = "/settings?s=account"
 

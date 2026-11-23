@@ -83,7 +83,7 @@ export function HeartRhythm({ rhythm }: { rhythm: HeartRhythmVM }) {
               <li key={e.id}>
                 <button type="button" onClick={() => select(e)} className={cn(PRESS, ROW, "w-full text-left hover:bg-accent active:bg-accent")}>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[15px] leading-5 font-medium">{e.label}</span>
+                    <span className="block text-[14px] leading-5 font-medium text-pretty">{e.label}</span>
                     <span className={cn(CAPTION, "mt-0.5 block tabular-nums")}>{when(e)}</span>
                   </span>
                   <ValueUnit value={bpm(e)} unit="bpm" className="font-numeric text-xl leading-6 font-bold" />

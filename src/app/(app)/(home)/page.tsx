@@ -333,7 +333,7 @@ function JournalWeek({ vm, at, className }: { vm: HomeVM; at: (href: string) => 
                 aria-current={current ? "date" : undefined}
                 className="flex min-h-16 flex-col items-center justify-center gap-2 rounded-lg transition-[background-color] duration-150 ease-standard outline-none hover:bg-foreground/5 focus-visible:ring-3 focus-visible:ring-ring/50 active:bg-accent"
               >
-                <span aria-hidden className={cn("text-xs leading-4 font-bold tracking-[0.1em] uppercase", current ? "text-foreground" : "text-muted-foreground")}>
+                <span aria-hidden className={cn("text-xs leading-4 font-medium tracking-normal", current ? "text-foreground" : "text-muted-foreground")}>
                   {formatDay(w.day, { weekday: "short" })}
                 </span>
                 <span
@@ -378,7 +378,7 @@ function MonitorAlert({ alert, href }: { alert: NonNullable<HomeVM["monitorAlert
         </p>
         <Link
           href={href}
-          className="relative inline-flex items-center gap-0.5 rounded-md text-xs leading-4 font-bold tracking-[0.1em] text-foreground uppercase no-underline! outline-none after:absolute after:-inset-x-2 after:-inset-y-3.5 hover:text-foreground-secondary focus-visible:ring-3 focus-visible:ring-ring/50"
+          className="relative inline-flex items-center gap-0.5 rounded-md text-xs leading-4 font-medium tracking-normal text-foreground no-underline! outline-none after:absolute after:-inset-x-2 after:-inset-y-3.5 hover:text-foreground-secondary focus-visible:ring-3 focus-visible:ring-ring/50"
         >
           View Health Monitor
           <ChevronRight aria-hidden className="size-3.5" strokeWidth={2} />

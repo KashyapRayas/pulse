@@ -4,7 +4,7 @@ import { DetailShell } from "@/components/shells/DetailShell"
 import { SectionShell } from "@/components/shells/SectionShell"
 import { SkeletonText } from "@/components/ui/skeleton"
 
-const LABEL = "text-xs leading-4 font-bold tracking-[0.1em] uppercase"
+const LABEL = "text-xs leading-4 font-medium tracking-normal"
 
 /** Heart rate loading: the date row, the reading with its three stats, the day's chart, then time in zones. */
 export default function Loading() {

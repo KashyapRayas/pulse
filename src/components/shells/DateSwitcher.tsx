@@ -42,7 +42,7 @@ const BARE_STEP = cn(
   PRESS
 )
 // 11 px caps: the reference app's "TODAY" is 39 pt wide with a 7.3 pt cap height [latest-home-top-2], [latest-home-sticky-header-user-2025] (spec §11 F4).
-const LABEL = "text-[11px] leading-4 font-bold tracking-[0.1em] whitespace-nowrap uppercase tabular-nums"
+const LABEL = "text-[11px] leading-4 font-medium tracking-normal whitespace-nowrap tabular-nums"
 
 /** Keys that belong to the focused control, not to day stepping. */
 function ownsArrows(target: EventTarget | null) {
@@ -141,7 +141,7 @@ function Switcher({ mode, calendar, placement = "body", narrow = false, steppers
             className={cn(
               PRESS,
               bare
-                ? "relative h-9 min-w-28 rounded-full px-2 text-center after:absolute after:inset-x-0 after:-inset-y-1 text-xs leading-4 font-bold tracking-[0.1em] whitespace-nowrap uppercase tabular-nums hover:text-foreground-secondary"
+                ? "relative h-9 min-w-28 rounded-full px-2 text-center after:absolute after:inset-x-0 after:-inset-y-1 text-[13px] leading-4 font-medium whitespace-nowrap tabular-nums hover:text-foreground-secondary"
                 : cn(LABEL, "relative h-7 min-w-24 rounded-full bg-foreground/[0.08] px-4 text-center after:absolute after:inset-x-0 after:-inset-y-2 hover:bg-foreground/[0.12]", narrow && NARROW_LABEL)
             )}
           >
