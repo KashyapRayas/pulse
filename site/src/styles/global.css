@@ -1,7 +1,4 @@
-@import "@fontsource-variable/figtree/wght.css";
-@import "@fontsource/barlow/latin-500.css";
-@import "@fontsource/barlow/latin-600.css";
-@import "@fontsource/barlow/latin-700.css";
+@import "@fontsource-variable/inter/opsz.css";
 @import "@fontsource/caveat/latin-500.css";
 
 /* The site's own rules sit in the `site` layer, below `kit` (the app screens, src/kit/kit.css), so the app's
@@ -12,44 +9,44 @@
   /* Tokens are the app's (src/app/globals.css). Dark only, like the app. */
   :root {
     color-scheme: dark;
-    --background-top: #1d2529;
-    --background-mid: #151b1f;
-    --background: #101518;
-    --foreground: #ffffff;
-    --foreground-secondary: #babac0;
-    --muted-foreground: #a9aeb3;
-    --card: #232629;
-    --card-top: #272a2d;
-    --sheet: #14181c;
-    --inset: #111619;
-    --border: rgb(255 255 255 / 0.1);
-    --card-edge: rgb(255 255 255 / 0.06);
+    --background-top: #0f1011;
+    --background-mid: #0f1011;
+    --background: #0f1011;
+    --foreground: #f7f8f8;
+    --foreground-secondary: #d0d6e0;
+    --muted-foreground: #8a8f98;
+    --card: #151619;
+    --card-top: #151619;
+    --sheet: #121315;
+    --inset: #0b0c0d;
+    --border: rgb(255 255 255 / 0.08);
+    --card-edge: rgb(255 255 255 / 0);
 
-    --recovery-green: #16ec06;
-    --recovery-yellow: #ffde00;
-    --recovery-red: #ff0026;
-    --recovery-red-text: #ff5a6a;
-    --strain: #0093e7;
-    --strain-text: #1fa0f0;
-    --strain-deep: #0d48be;
-    --sleep: #7ba1bb;
-    --sleep-deep: #39597b;
-    --optimal: #00f19f;
-    --warning: #ffa722;
-    --stress-low: #67aee6;
-    --stress-medium: #00f19f;
-    --stress-high: #ffa722;
-    --coach: #7095fe;
-    --recovery-blue: #67aee6;
-    --insight-from: #4b418c;
-    --insight-to: #346e8c;
-    --primary: #00f19f;
-    --primary-foreground: #101518;
-    --card-hover: #2c3033;
-    --ink: #0b0f12;
+    --recovery-green: #4cb782;
+    --recovery-yellow: #f2c94c;
+    --recovery-red: #eb5757;
+    --recovery-red-text: #f27474;
+    --strain: #4ea7fc;
+    --strain-text: #6cb6fd;
+    --strain-deep: #2f6fc9;
+    --sleep: #8f9ab8;
+    --sleep-deep: #4b5675;
+    --optimal: #4cb782;
+    --warning: #f2994a;
+    --stress-low: #68a8f2;
+    --stress-medium: #4cb782;
+    --stress-high: #f2994a;
+    --coach: #7170ff;
+    --recovery-blue: #68a8f2;
+    --insight-from: #1b1c36;
+    --insight-to: #13202b;
+    --primary: #5e6ad2;
+    --primary-foreground: #ffffff;
+    --card-hover: #1b1c20;
+    --ink: #08090a;
 
-    --font-sans: "Figtree Variable", ui-sans-serif, system-ui, sans-serif;
-    --font-numeric: "Barlow", var(--font-sans);
+    --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+    --font-numeric: "Inter Variable", var(--font-sans);
     --font-code: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
     --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
