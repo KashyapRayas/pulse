@@ -34,6 +34,11 @@ android {
         }
     }
     buildTypes {
+        // The debug build installs beside a release of this shell and beside Pulse Mobile (in.portlabs.pulse): its own
+        // application id and URL scheme (src/debug/res), under the name "Pulse".
+        debug {
+            applicationIdSuffix ".fork"
+        }
         release {
             if (releaseStoreFile) signingConfig signingConfigs.release
             minifyEnabled false
