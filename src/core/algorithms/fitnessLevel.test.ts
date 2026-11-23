@@ -31,29 +31,33 @@ describe("vo2maxPercentile (FRIEND 2015 Table 2)", () => {
 });
 
 describe("fitnessCategory", () => {
-  it("cuts at 20 / 40 / 60 / 80", () => {
-    expect(fitnessCategory(19.99)).toBe("poor");
-    expect(fitnessCategory(20)).toBe("fair");
-    expect(fitnessCategory(39.99)).toBe("fair");
-    expect(fitnessCategory(40)).toBe("good");
-    expect(fitnessCategory(59.99)).toBe("good");
-    expect(fitnessCategory(60)).toBe("excellent");
-    expect(fitnessCategory(79.99)).toBe("excellent");
-    expect(fitnessCategory(80)).toBe("superior");
+  it("cuts at the Cooper Institute's 40 / 60 / 80 / 95", () => {
+    expect(fitnessCategory(39.99)).toBe("poor");
+    expect(fitnessCategory(40)).toBe("fair");
+    expect(fitnessCategory(59.99)).toBe("fair");
+    expect(fitnessCategory(60)).toBe("good");
+    expect(fitnessCategory(79.99)).toBe("good");
+    expect(fitnessCategory(80)).toBe("excellent");
+    expect(fitnessCategory(94.99)).toBe("excellent");
+    expect(fitnessCategory(95)).toBe("superior");
+  });
+
+  it("the median is Fair, not Good", () => {
+    expect(fitnessLevel(37.8, 45, "male")).toEqual({ percentile: 50, category: "fair" });
   });
 
   it("fitnessLevel combines both", () => {
     expect(fitnessLevel(49.2, 35, "male").percentile).toBeCloseTo(75, 10);
-    expect(fitnessLevel(49.2, 35, "male").category).toBe("excellent");
+    expect(fitnessLevel(49.2, 35, "male").category).toBe("good");
     expect(fitnessLevel(16.0, 45, "female")).toEqual({ percentile: 5, category: "poor" });
   });
 });
 
 describe("referenceVo2max", () => {
-  it("is the 75th percentile at decade midpoints, linear between them, flat outside", () => {
-    expect(referenceVo2max(35, "male")).toBeCloseTo(49.2, 10);
-    expect(referenceVo2max(40, "male")).toBeCloseTo((49.2 + 45.0) / 2, 10);
-    expect(referenceVo2max(20, "male")).toBeCloseTo(55.2, 10);
-    expect(referenceVo2max(85, "female")).toBeCloseTo(20.8, 10);
+  it("is the median (50th percentile) at decade midpoints, linear between them, flat outside", () => {
+    expect(referenceVo2max(35, "male")).toBeCloseTo(42.4, 10);
+    expect(referenceVo2max(40, "male")).toBeCloseTo((42.4 + 37.8) / 2, 10);
+    expect(referenceVo2max(20, "male")).toBeCloseTo(48.0, 10);
+    expect(referenceVo2max(85, "female")).toBeCloseTo(18.3, 10);
   });
 });

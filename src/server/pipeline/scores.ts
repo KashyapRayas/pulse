@@ -3,7 +3,7 @@
 // stage2.ts calls them in a fixed order, which the pushes depend on.
 import type { ReasonCode } from "@/lib/reasons";
 import { addDays, fractionalYears, localMidnight, localMinutes, wholeYears } from "../time";
-import { deviation, isTrusted, isUsable, sigma } from "@/core/scoring/baselines";
+import { deviation, isTrusted, isUsable, lnHrv, sigma } from "@/core/scoring/baselines";
 import { chargeDrivers, type ChargeDriver } from "@/core/scoring/drivers";
 import { forecast as recoveryForecast } from "@/core/scoring/forecast";
 import { evaluateWithTrainingLoad, type ReadinessDay } from "@/core/scoring/readiness";
@@ -56,7 +56,10 @@ export type Inputs = {
 /** State folded over the days before the current one (baselines before today's fold). */
 export type Fold = ReturnType<typeof newFold>;
 export const newFold = () => ({
+  /** Raw-ms HRV baseline: shown on screens (mean ± SD in ms). */
   hrvB: null as BaselineState | null,
+  /** ln(ms) HRV baseline: what Recovery, its drivers and the journal's HRV z score against. */
+  hrvLnB: null as BaselineState | null,
   rhrB: null as BaselineState | null,
   respB: null as BaselineState | null,
   skinB: null as BaselineState | null,
@@ -159,7 +162,15 @@ export function scoreSleep(data: Data, inputs: Inputs, f: Fold, d: Day, tz: stri
   const consistency = sriConsistency(sri);
   const performance =
     main && main.asleepMin > 0
-      ? rest(main.asleepMin * 60, main.efficiency, (main.deepMin ?? 0) * 60, (main.remMin ?? 0) * 60, needHours, consistency)
+      ? rest(
+          main.asleepMin * 60,
+          main.efficiency,
+          // An unstaged (CLASSIC) night has no deep or REM: the restorative term drops instead of scoring 0.
+          main.deepMin != null && main.remMin != null ? main.deepMin * 60 : null,
+          main.deepMin != null && main.remMin != null ? main.remMin * 60 : null,
+          needHours,
+          consistency,
+        )
       : null;
   const yesterdayNaps = (data.sessionsByDay.get(addDays(day, -1)) ?? []).filter((s) => !s.isMain);
   const creditedMin = creditedSleepMin(main?.asleepMin ?? null, yesterdayNaps.reduce((a, s) => a + (s.asleepMin ?? 0), 0));
@@ -207,7 +218,7 @@ function sleepRegularity(data: Data, cached: Map<string, Cached>, day: string, t
 
 export function scoreRecovery(f: Fold, d: Day, sleep: SleepRow): RecoveryRow {
   const { dm, mainSession, main } = d;
-  const { hrvB, rhrB, respB, skinB } = f;
+  const { hrvB, hrvLnB, rhrB, respB, skinB } = f;
   const hrv = dm?.hrvMs ?? null;
   // Google's daily resting HR first; Pulse's sleep-session estimate only on days Google has none.
   const rhr = dm?.rhrBpm ?? d.cache.sessionRhr;
@@ -235,15 +246,15 @@ export function scoreRecovery(f: Fold, d: Day, sleep: SleepRow): RecoveryRow {
   else if (!mainSession.processed) reason = "awaiting_sleep_sync";
   else if (mainSession.stagesStatus !== "SUCCEEDED" || hrv == null) reason = "no_hrv_last_night";
   else {
-    const g = hrvB
-      ? gatedRecovery({ hrv, rhr, resp, hrvBaseline: hrvB, rhrBaseline: rhrUsable, respBaseline: respUsable, sleepPerf, skinTempDev })
+    const g = hrvLnB
+      ? gatedRecovery({ hrv, rhr, resp, hrvBaseline: hrvLnB, rhrBaseline: rhrUsable, respBaseline: respUsable, sleepPerf, skinTempDev })
       : { recovery: null };
     if (g.recovery == null) {
       reason = "calibrating";
-      nightsLeft = Math.max(1, minBaselineNights - (hrvB?.nValid ?? 0));
+      nightsLeft = Math.max(1, minBaselineNights - (hrvLnB?.nValid ?? 0));
     } else {
       value = g.recovery;
-      drivers = chargeDrivers({ hrv, rhr, resp, hrvBaseline: hrvB!, rhrBaseline: rhrUsable, respBaseline: respUsable, sleepPerf, skinTempDev });
+      drivers = chargeDrivers({ hrv, rhr, resp, hrvBaseline: hrvLnB!, rhrBaseline: rhrUsable, respBaseline: respUsable, sleepPerf, skinTempDev });
     }
   }
   const terms =
@@ -258,13 +269,14 @@ export function scoreRecovery(f: Fold, d: Day, sleep: SleepRow): RecoveryRow {
         ];
   const prev = d.cache.recovery;
   const updated = value != null && prev?.value != null && (prev.updated || terms.some((t) => !prev.terms.includes(t)));
-  const hrvZ = hrv != null && hrvB && isUsable(hrvB) ? deviation(hrv, hrvB).z : null;
+  const lnHrvToday = lnHrv(hrv);
+  const hrvZ = lnHrvToday != null && hrvLnB && isUsable(hrvLnB) ? deviation(lnHrvToday, hrvLnB).z : null;
   if (value != null) f.recoveries.push(value);
   return {
     value,
     reason,
     ...(nightsLeft !== undefined && { nightsLeft }),
-    provisional: value != null && !isTrusted(hrvB!),
+    provisional: value != null && !isTrusted(hrvLnB!),
     stale,
     terms,
     updated,
@@ -494,9 +506,9 @@ export function scoreHealthspan(data: Data, f: Fold, d: Day, sleep: SleepRow, op
     day,
     sleepHours: main ? main.asleepMin / 60 : null,
     sri: sleep.sri,
-    // Time in Pulse's own zones (heart-rate reserve, as Strain and the zone charts count them): zones 1-3, zones 4-5.
-    zone13Min: worn ? (s1.zoneSeconds[0] + s1.zoneSeconds[1] + s1.zoneSeconds[2]) / 60 : null,
-    zone45Min: worn ? (s1.zoneSeconds[3] + s1.zoneSeconds[4]) / 60 : null,
+    // ACSM intensity minutes on heart-rate reserve: moderate or harder (≥ 40 %), and vigorous (≥ 60 %).
+    mvpaMin: worn ? (s1.intensityMin?.moderatePlus ?? null) : null,
+    vigorousMin: worn ? (s1.intensityMin?.vigorous ?? null) : null,
     strengthMin: worn ? strengthMin : null,
     steps: dm?.steps ?? null,
     vo2maxRun: dm?.vo2maxRun ?? null,

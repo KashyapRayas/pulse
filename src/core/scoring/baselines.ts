@@ -32,6 +32,11 @@ export const metricCfg = {
   strain: cfg(0.0, 100.0, 5.0),
   /** ln(ms), folded with hard-outlier rejection off (Readiness). */
   readiness_hrv_ln: cfg(2.079, 5.521, 0.08),
+  /**
+   * Nightly HRV as ln(RMSSD), the domain HRV monitoring works in (Plews 2013, Buchheit 2014): RMSSD is right-skewed
+   * and its spread grows with its level. Range ln 5 … ln 250 ms; floor 0.08 (σ ≥ 0.10, about a 10 % night-to-night CV).
+   */
+  hrv_ln: cfg(1.609, 5.521, 0.08),
   daytime_hr: cfg(35.0, 160.0, 3.0),
   daytime_rmssd: cfg(5.0, 250.0, 7.0),
 } satisfies Record<string, MetricCfg>;
@@ -42,6 +47,9 @@ export const respCfg = metricCfg.resp;
 export const skinTempCfg = metricCfg.skin_temp;
 export const strainCfg = metricCfg.strain;
 export const readinessHRVLnCfg = metricCfg.readiness_hrv_ln;
+export const hrvLnCfg = metricCfg.hrv_ln;
+/** ln(ms) for an HRV fold, or null. */
+export const lnHrv = (ms: number | null | undefined): number | null => (ms != null && ms > 0 ? Math.log(ms) : null);
 export const daytimeHRCfg = metricCfg.daytime_hr;
 export const daytimeRMSSDCfg = metricCfg.daytime_rmssd;
 

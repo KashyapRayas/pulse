@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { foldHistory, hrvCfg } from "./baselines";
+import { foldHistory, hrvLnCfg } from "./baselines";
 import {
   band,
   bandRedMax,
   gatedRecovery,
+  hrvZ,
   logisticK,
   logisticZ0,
   minBaselineNights,
@@ -32,13 +33,17 @@ const baseline = (mean: number, sigma: number, nValid = 14): BaselineState => ({
   nightsSinceUpdate: 0,
   status: nValid >= 14 ? "trusted" : "provisional",
 });
+/** Recovery scores HRV on ln(ms): the same baseline in ln units (σ_ln ≈ σ / mean, the delta method). */
+const lnBaseline = (meanMs: number, sigmaMs: number, nValid = 14): BaselineState => baseline(Math.log(meanMs), sigmaMs / meanMs, nValid);
+const lnDriver = (meanMs: number, spreadMs: number) => ({ mean: Math.log(meanMs), spread: spreadMs / meanMs });
+const lnFold = (ms: number[]) => foldHistory(ms.map(Math.log), hrvLnCfg);
 
 describe("ChargeEffortRestScoringTest: Charge", () => {
   it("weight constants", () => {
     expect([wHRV, wRHR, wSleep, wResp, wSkinTemp, skinTempDevScale]).toEqual([0.55, 0.2, 0.15, 0.05, 0.05, 1.0]);
   });
 
-  const hrvBase = { mean: 60, spread: 8 };
+  const hrvBase = lnDriver(60, 8);
   const rhrBase = { mean: 55, spread: 4 };
   const chargeAt = (skinTempDev: number | null) =>
     recovery({ hrv: 60, rhr: 55, hrvBaseline: hrvBase, rhrBaseline: rhrBase, sleepPerf: sleepPerfCenter, skinTempDev })!;
@@ -93,7 +98,7 @@ describe("RecoveryRequiredHrvBaselineTest", () => {
   });
 
   it("preserves cold start and the Swift-oracle score", () => {
-    const hrvB = { mean: 50, spread: 6 / 1.253 };
+    const hrvB = lnDriver(50, 6 / 1.253);
     expect(recovery({ hrv: 50, rhr: 60, hrvBaseline: hrvB, sleepPerf: 0.85, hrvBaselineUsable: false })).toBeNull();
     expect(recovery({ hrv: 50, rhr: 60, hrvBaseline: hrvB, sleepPerf: 0.85 })).toBeCloseTo(57.932425214874954, 12);
   });
@@ -101,10 +106,10 @@ describe("RecoveryRequiredHrvBaselineTest", () => {
 
 describe("RecoverySaturationGuardTest", () => {
   const undamped = (hrv: number, rhr: number, hrvB: BaselineState, rhrB: BaselineState) => {
-    const z = (wHRV * zScore(hrv, hrvB.baseline, hrvB.spread) + wRHR * zScore(rhrB.baseline, rhr, rhrB.spread)) / (wHRV + wRHR);
+    const z = (wHRV * hrvZ(hrv, { mean: hrvB.baseline, spread: hrvB.spread }) + wRHR * zScore(rhrB.baseline, rhr, rhrB.spread)) / (wHRV + wRHR);
     return 100 / (1 + Math.exp(-logisticK * (z - logisticZ0)));
   };
-  const hrvB = baseline(50, 6.265);
+  const hrvB = lnBaseline(50, 6.265);
   const rhrB = baseline(55, 5.0);
   const score = (hrv: number, rhr: number) => recoveryFromStates({ hrv, rhr, hrvBaseline: hrvB, rhrBaseline: rhrB })!;
 
@@ -135,7 +140,7 @@ describe("RecoverySaturationGuardTest", () => {
   });
 
   it("a firing night still scores the raw composite and stays red", () => {
-    const sat = parasympatheticSaturation(zScore(41, hrvB.baseline, hrvB.spread), zScore(rhrB.baseline, 48, rhrB.spread));
+    const sat = parasympatheticSaturation(hrvZ(41, { mean: hrvB.baseline, spread: hrvB.spread }), zScore(rhrB.baseline, 48, rhrB.spread));
     expect(sat.active).toBe(true);
     expect(sat.dampFraction).toBeGreaterThan(0.4);
     expect(score(41, 48)).toBeCloseTo(undamped(41, 48, hrvB, rhrB), 9);
@@ -157,7 +162,7 @@ describe("RecoveryRhrBaselineUsableTest", () => {
     nightsSinceUpdate: status === "stale" ? 20 : 0,
     status,
   });
-  const hrvBase = state(55, 12, "trusted", 20);
+  const hrvBase = state(Math.log(55), 12 / 55, "trusted", 20);
   const score = (rhrBaseline: BaselineState | null) =>
     recoveryFromStates({ hrv: 55, rhr: 62, hrvBaseline: hrvBase, rhrBaseline, sleepPerf: 0.85 })!;
 
@@ -169,10 +174,10 @@ describe("RecoveryRhrBaselineUsableTest", () => {
 });
 
 describe("RecoveryIndexActivityBalanceTest", () => {
-  const args = { hrv: 50, rhr: 55, hrvBaseline: baseline(50, 6), rhrBaseline: baseline(55, 3), sleepPerf: sleepPerfCenter };
+  const args = { hrv: 50, rhr: 55, hrvBaseline: lnBaseline(50, 6), rhrBaseline: baseline(55, 3), sleepPerf: sleepPerfCenter };
 
   it("omitted optional terms equal explicit nulls", () => {
-    const a = { hrv: 55, rhr: 52, resp: 14, hrvBaseline: baseline(50, 6), rhrBaseline: baseline(55, 3), respBaseline: baseline(14.5, 1), sleepPerf: 0.9, skinTempDev: 0.4 };
+    const a = { hrv: 55, rhr: 52, resp: 14, hrvBaseline: lnBaseline(50, 6), rhrBaseline: baseline(55, 3), respBaseline: baseline(14.5, 1), sleepPerf: 0.9, skinTempDev: 0.4 };
     expect(recoveryFromStates({ ...a, recoveryIndexSlope: null, effortBaseline: null, priorDayEffort: null })).toBe(
       recoveryFromStates(a),
     );
@@ -187,7 +192,7 @@ describe("RecoveryIndexActivityBalanceTest", () => {
 
   it("activity balance: harder yesterday lowers Charge, and needs both value and baseline", () => {
     const s = (priorDayEffort: number | null, effortBaseline: BaselineState | null = baseline(40, 15)) =>
-      recoveryFromStates({ hrv: 58, rhr: 50, hrvBaseline: baseline(50, 6), rhrBaseline: baseline(55, 3), sleepPerf: 0.92, effortBaseline, priorDayEffort })!;
+      recoveryFromStates({ hrv: 58, rhr: 50, hrvBaseline: lnBaseline(50, 6), rhrBaseline: baseline(55, 3), sleepPerf: 0.92, effortBaseline, priorDayEffort })!;
     expect(s(40)).toBeLessThan(s(null));
     expect(s(10)).toBeGreaterThan(s(40));
     expect(s(40)).toBeGreaterThan(s(65));
@@ -250,22 +255,22 @@ describe("plan scenarios", () => {
   });
 
   it("an unusable or missing HRV baseline returns null", () => {
-    const cold = foldHistory([50, 50, 50], hrvCfg);
+    const cold = lnFold([50, 50, 50]);
     expect(recoveryFromStates({ hrv: 50, rhr: 55, hrvBaseline: cold })).toBeNull();
     expect(recovery({ hrv: 50, rhr: 55, hrvBaseline: null })).toBeNull();
   });
 
   it("fewer than 7 accepted prior nights is null with calibrating; 7 scores", () => {
     expect(minBaselineNights).toBe(7);
-    const six = foldHistory(Array(6).fill(50), hrvCfg);
+    const six = lnFold(Array(6).fill(50));
     expect(gatedRecovery({ hrv: 50, rhr: null, hrvBaseline: six })).toEqual({ recovery: null, confidence: "calibrating" });
-    const seven = foldHistory(Array(7).fill(50), hrvCfg);
+    const seven = lnFold(Array(7).fill(50));
     expect(gatedRecovery({ hrv: 50, rhr: null, hrvBaseline: seven })).toMatchObject({ confidence: "building" });
     expect(gatedRecovery({ hrv: null, rhr: 55, hrvBaseline: seven })).toEqual({ recovery: null, confidence: "calibrating" });
   });
 
   it("skin-temp null equals the no-skin-temp model; ±0.5 °C gives the same penalty", () => {
-    const a = { hrv: 58, rhr: 53, resp: 15, hrvBaseline: baseline(50, 6), rhrBaseline: baseline(55, 3), respBaseline: baseline(15.5, 1), sleepPerf: 0.8 };
+    const a = { hrv: 58, rhr: 53, resp: 15, hrvBaseline: lnBaseline(50, 6), rhrBaseline: baseline(55, 3), respBaseline: baseline(15.5, 1), sleepPerf: 0.8 };
     const noSkin = recoveryFromStates(a)!;
     expect(recoveryFromStates({ ...a, skinTempDev: null })).toBe(noSkin);
     const warm = recoveryFromStates({ ...a, skinTempDev: 0.5 })!;
@@ -274,9 +279,18 @@ describe("plan scenarios", () => {
   });
 
   it("gatedRecovery uses every supplied term", () => {
-    const hrvBaseline = baseline(50, 6);
+    const hrvBaseline = lnBaseline(50, 6);
     const terms = { hrv: 58, rhr: 53, resp: 15, rhrBaseline: baseline(55, 3), respBaseline: baseline(15.5, 1), sleepPerf: 0.8, skinTempDev: 0.2 };
     expect(gatedRecovery({ ...terms, hrvBaseline }).recovery).toBe(recoveryFromStates({ ...terms, hrvBaseline }));
     expect(gatedRecovery({ ...terms, hrvBaseline }).confidence).toBe("solid");
+  });
+});
+
+describe("HRV on ln(RMSSD)", () => {
+  it("the same relative drop moves Charge alike at 25 ms and at 100 ms", () => {
+    // 20 % below a personal baseline, with the same night-to-night CV (10 %), for a low- and a high-HRV person.
+    const at = (meanMs: number) => recovery({ hrv: meanMs * 0.8, rhr: null, hrvBaseline: lnDriver(meanMs, (0.1 * meanMs) / 1.253) })!;
+    expect(at(25)).toBeCloseTo(at(100), 9);
+    expect(at(25)).toBeLessThan(bandRedMax);
   });
 });

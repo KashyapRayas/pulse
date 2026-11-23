@@ -58,8 +58,13 @@ describe("ChargeEffortRestScoringTest: Rest", () => {
     expect(rest(0, 0.9, 0, 0)).toBeNull();
   });
 
-  it("no consistency uses a neutral 50 at full weight", () => {
-    expect(rest(8 * H, 0.92, 1.5 * H, 2 * H)).toBeCloseTo(100 * 0.5 + 92 * 0.2 + 87.5 * 0.2 + 50 * 0.1, EPS);
+  it("no consistency drops the term and renormalizes the rest (not a flat 50)", () => {
+    expect(rest(8 * H, 0.92, 1.5 * H, 2 * H)).toBeCloseTo((100 * 0.5 + 92 * 0.2 + 87.5 * 0.2) / 0.9, 2);
+  });
+
+  it("an unstaged night drops the restorative term instead of scoring 0 deep and 0 REM", () => {
+    expect(rest(8 * H, 0.92, null, null, null, 0.8)).toBeCloseTo((100 * 0.5 + 92 * 0.2 + 80 * 0.1) / 0.8, 2);
+    expect(rest(8 * H, 0.92, null, null, null, 0.8)!).toBeGreaterThan(rest(8 * H, 0.92, 0, 0, null, 0.8)!);
   });
 
   it("the consistency term is included", () => {
@@ -67,18 +72,18 @@ describe("ChargeEffortRestScoringTest: Rest", () => {
   });
 
   it("duration dominates a short night", () => {
-    expect(rest(4 * H, 0.95, H, H)).toBeCloseTo(50 * 0.5 + 95 * 0.2 + 100 * 0.2 + 50 * 0.1, EPS);
+    expect(rest(4 * H, 0.95, H, H)).toBeCloseTo((50 * 0.5 + 95 * 0.2 + 100 * 0.2) / 0.9, 2);
   });
 
   it("a refined lower need raises duration; oversleep clamps at 100", () => {
     expect(rest(6 * H, 0.9, H, 1.5 * H, 6)!).toBeGreaterThan(rest(6 * H, 0.9, H, 1.5 * H)!);
     const share = (2 + 2.5) / 10;
-    expect(rest(10 * H, 0.9, 2 * H, 2.5 * H)).toBeCloseTo(100 * 0.5 + 90 * 0.2 + (share / 0.5) * 100 * 0.2 + 50 * 0.1, EPS);
+    expect(rest(10 * H, 0.9, 2 * H, 2.5 * H)).toBeCloseTo((100 * 0.5 + 90 * 0.2 + (share / 0.5) * 100 * 0.2) / 0.9, 2);
   });
 
   it("low deep share scales the restorative term down to half", () => {
     // 8 h, no deep, 4 h REM: share 0.5 → 100, deep factor 0.5 → 50.
-    expect(rest(8 * H, 0.9, 0, 4 * H)).toBeCloseTo(100 * 0.5 + 90 * 0.2 + 50 * 0.2 + 50 * 0.1, EPS);
+    expect(rest(8 * H, 0.9, 0, 4 * H)).toBeCloseTo((100 * 0.5 + 90 * 0.2 + 50 * 0.2) / 0.9, 2);
   });
 
   it("restFromTotals reads a night's stored minutes", () => {
@@ -113,9 +118,14 @@ describe("RestNeedTest", () => {
 });
 
 describe("plan scenarios: need", () => {
-  it("under 7 nights is 8 h; the clamp holds at 8–9.5 h", () => {
+  it("under 7 nights is the 8 h default; the adult floor is 7 h (AASM/SRS); the cap is 9.5 h", () => {
     expect(personalizedNeedHours([9.5, 9.5, 9.5, 9.5, 9.5, 9.5], 30)).toBe(8);
-    expect(personalizedNeedHours(Array(7).fill(6), 30)).toBe(8);
+    expect(personalizedNeedHours(Array(7).fill(6), 30)).toBe(7);
+    // Someone who reliably sleeps 7.1 h meets the guideline, so their need is 7.1 h, not 8.
+    expect(personalizedNeedHours(Array(28).fill(7.1), 40)).toBeCloseTo(7.1, 12);
+    expect(personalizedNeedHours(Array(7).fill(6), 70)).toBe(7);
+    expect(personalizedNeedHours(Array(7).fill(6), 15)).toBe(8);
+    expect(personalizedNeedHours(Array(7).fill(6), 10)).toBe(9);
     expect(personalizedNeedHours(Array(7).fill(12), 30)).toBe(maxNeedHours);
     // 75th percentile of 7..13 (step 1) is 11.5 → capped
     expect(personalizedNeedHours([7, 8, 9, 10, 11, 12, 13], 30)).toBe(9.5);
@@ -131,18 +141,19 @@ describe("SleepDebtTest", () => {
     expect(l.balanceMin).toBeCloseTo(0, EPS);
   });
 
-  it("debt carries at 55% and a surplus does not bank", () => {
+  it("the whole shortfall counts, debt decays by 0.8 a night, and a surplus repays it", () => {
+    // 120 → 0.8 × 120 − 60 = 36 → 0.8 × 36 + 60 = 88.8.
     const l = ledger([["2026-06-01", 360], ["2026-06-02", 540], ["2026-06-03", 420]], 8);
-    expect(l.balanceMin).toBeCloseTo(-33, EPS);
+    expect(l.balanceMin).toBeCloseTo(-88.8, EPS);
     expect(l.isDebt).toBe(true);
-    expect(l.magnitudeMin).toBeCloseTo(33, EPS);
+    expect(l.magnitudeMin).toBeCloseTo(88.8, EPS);
     expect(l.nights.map((n) => n.deltaMin)).toEqual([-120, 60, -60]);
   });
 
   it("skips no-data nights", () => {
     const l = ledger([["2026-06-01", 480], ["2026-06-02", null], ["2026-06-03", 0], ["2026-06-04", 420]], 8);
     expect(l.nightCount).toBe(2);
-    expect(l.balanceMin).toBeCloseTo(-33, EPS);
+    expect(l.balanceMin).toBeCloseTo(-60, EPS);
     expect(l.nights.map((n) => n.day)).toEqual(["2026-06-01", "2026-06-04"]);
   });
 
@@ -150,7 +161,8 @@ describe("SleepDebtTest", () => {
     const series = Array.from({ length: 16 }, (_, i) => [`2026-06-${String(i + 1).padStart(2, "0")}`, 420] as [string, number]);
     const l = ledger(series, 8, 14);
     expect(l.nightCount).toBe(14);
-    expect(l.balanceMin).toBeCloseTo(-73.3, EPS);
+    // A chronic 1 h shortfall builds up (Van Dongen 2003): 60 × (1 − 0.8^14) / 0.2 = 286.8 min.
+    expect(l.balanceMin).toBeCloseTo(-286.8, EPS);
     expect(l.nights[0].day).toBe("2026-06-03");
     expect(l.nights.at(-1)!.day).toBe("2026-06-16");
   });
@@ -161,25 +173,26 @@ describe("SleepDebtTest", () => {
     expect(ledger([["2026-06-01", null]]).nightCount).toBe(0);
     const l = ledger([["2026-06-01", 420]]);
     expect(l.needMin).toBe(defaultSleepNeedHours * 60);
-    expect(l.balanceMin).toBeCloseTo(-33, EPS);
+    expect(l.balanceMin).toBeCloseTo(-60, EPS);
   });
 
   it("nap minutes add repayment credit", () => {
     const credited = creditedSleepMin(392, 48)!;
     expect(credited).toBe(440);
-    expect(ledger([["2026-06-01", credited]], 8).balanceMin).toBeCloseTo(-22, EPS);
+    expect(ledger([["2026-06-01", credited]], 8).balanceMin).toBeCloseTo(-40, EPS);
     expect(creditedSleepMin(null, 48)).toBeNull();
     expect(creditedSleepMin(0, 48)).toBeNull();
     expect(creditedSleepMin(392, -10)).toBe(392);
   });
 
   it("debt under ten minutes clears; exactly ten remains", () => {
-    expect(ledger([["2026-06-01", 480 - 9.9 / 0.55]], 8).balanceMin).toBeCloseTo(0, EPS);
-    expect(ledger([["2026-06-01", 480 - 10 / 0.55]], 8).balanceMin).toBeCloseTo(-10, EPS);
+    expect(ledger([["2026-06-01", 480 - 9.9]], 8).balanceMin).toBeCloseTo(0, EPS);
+    expect(ledger([["2026-06-01", 480 - 10]], 8).balanceMin).toBeCloseTo(-10, EPS);
   });
 
   it("meeting need including the current debt clears it", () => {
-    const l = ledger([["2026-06-01", 360], ["2026-06-02", 546]], 8);
+    // 120 owed, decays to 96 by tonight: 480 + 96 = 576 minutes clears it.
+    const l = ledger([["2026-06-01", 360], ["2026-06-02", 576]], 8);
     expect(l.balanceMin).toBeCloseTo(0, EPS);
     expect(l.isDebt).toBe(false);
   });
@@ -187,12 +200,12 @@ describe("SleepDebtTest", () => {
   it("imported debt is verbatim but does not seed the local fallback", () => {
     const values = debtSeries([["2026-06-01", 420], ["2026-06-02", 480]], 8, new Map([["2026-06-01", 61.25]]));
     expect(values[0][1]).toBe(61.25);
-    expect(round1(values[1][1])).toBeCloseTo(18.2, EPS);
+    expect(round1(values[1][1])).toBeCloseTo(48, EPS);
   });
 
   it("debtSeries rounds like the ledger", () => {
     const series: [string, number][] = [["2026-06-01", 420], ["2026-06-02", 410]];
-    expect(debtSeries(series, 8).at(-1)![1]).toBeCloseTo(56.7, EPS);
+    expect(debtSeries(series, 8).at(-1)![1]).toBeCloseTo(118, EPS);
     expect(debtSeries(series, 8).at(-1)![1]).toBe(ledger(series, 8).magnitudeMin);
   });
 

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { acwrSignal, evaluate, evaluateWithTrainingLoad, mean, type ReadinessDay, sampleSD } from "./readiness";
+import { trimpFromEffort, trimpToStrain } from "./strain";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 const d = (i: number, hrv: number | null, rhr: number | null, effort: number | null, resp: number | null = null): ReadinessDay => ({
@@ -72,8 +73,8 @@ describe("ReadinessEngineTest", () => {
 });
 
 describe("plan U6: ACWR bands and monotony", () => {
-  it("classifies 0.8 / 1.3 / 1.5 as noop does (lower bound inclusive)", () => {
-    expect(acwrSignal(0.79, 1, 1)).toMatchObject({ flag: "watch", detail: "LOAD_RAMPING_DOWN" });
+  it("classifies 0.8 / 1.3 / 1.5 (lower bound inclusive); a falling ratio is neutral, not a warning", () => {
+    expect(acwrSignal(0.79, 1, 1)).toMatchObject({ flag: "neutral", detail: "LOAD_RAMPING_DOWN" });
     expect(acwrSignal(0.8, 1, 1)).toMatchObject({ flag: "good", detail: "LOAD_SWEET_SPOT" });
     expect(acwrSignal(1.3, 1, 1)).toMatchObject({ flag: "watch", detail: "LOAD_BUILDING_FAST" });
     expect(acwrSignal(1.5, 1, 1)).toMatchObject({ flag: "bad", detail: "LOAD_SPIKING" });
@@ -141,6 +142,27 @@ describe("ReadinessTrainingLoadTest", () => {
     const paired = evaluateWithTrainingLoad(range(28).map((i) => metric(i, i <= 20 ? 10 : 100)), "2026-01-20");
     expect(paired.trainingLoad.endDay).toBe("2026-01-20");
     expect(paired.trainingLoad.contiguousDays).toBe(20);
-    expect(paired.trainingLoad.points.at(-1)!.load).toBe(10);
+    // CTL/ATL/TSB run on linear TRIMP, the additive dose Banister's model expects.
+    expect(paired.trainingLoad.points.at(-1)!.load).toBeCloseTo(trimpFromEffort(10), 10);
+  });
+});
+
+describe("training load on linear TRIMP, uncoupled ACWR", () => {
+  const day = (i: number) => new Date(Date.UTC(2026, 0, 1) + i * 864e5).toISOString().slice(0, 10);
+  const week = [118, 9, 118, 9, 118, 9, 118];
+  const rows = (trimps: number[]) => trimps.map((t, i) => ({ day: day(i), effort: trimpToStrain(t) }));
+
+  it("an ordinary 4-workout week is not monotonous (Foster's monotony on TRIMP, 1.22)", () => {
+    const r = evaluate(rows([...week, ...week, ...week]));
+    expect(r.monotony!).toBeCloseTo(1.22, 1);
+    expect(r.signals.some((s) => s.key === "monotony")).toBe(false);
+  });
+
+  it("a week of doubled workouts is a spike, not the sweet spot", () => {
+    const base = Array.from({ length: 21 }, (_, i) => week[i % 7]);
+    const r = evaluate(rows([...base, ...week.map((t) => (t > 100 ? 2 * t : t))]));
+    // Uncoupled: the acute week against the 21 days before it.
+    expect(r.acwr!).toBeCloseTo(1.92, 1);
+    expect(r.signals.find((s) => s.key === "acwr")?.detail).toBe("LOAD_SPIKING");
   });
 });

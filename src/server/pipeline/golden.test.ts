@@ -179,6 +179,32 @@ const GOLDEN: Record<number, Record<string, string>> = {
     "intraday_series.stress": "66d650df74998208",
     "reports": "7c7cfdf8c1583777",
   },
+  // 11: scores corrected against current standards (docs/research/standards-audit-2026-11.md). Raw HR, the per-minute
+  // load and still-HR series, stress and activities are unchanged; every column built on load ratios, Recovery's HRV,
+  // sleep performance and need, debt, Healthspan, fitness bands and SpO2 moves.
+  11: {
+    "daily_scores.scoring_version": "16e50b07b414d86c",
+    "daily_scores.strain": "3670d5e4c7c0516e",
+    "daily_scores.activities": "cb2d75373aaf4d20",
+    "daily_scores.session_rhr_bpm": "2f808b51bd7a0bc8",
+    "daily_scores.recovery": "fc48d293917e7e19",
+    "daily_scores.sleep": "1d250a7e0f01dadb",
+    "daily_scores.training_load": "2efbb54e155e3a3d",
+    "daily_scores.strain_target": "ca1c1a6baca5d5dc",
+    "daily_scores.sleep_planner": "7b0c3e7b583425b1",
+    "daily_scores.energy_bank": "843501a6ced1c65e",
+    "daily_scores.stress": "a8514c3f8bedce98",
+    "daily_scores.health_monitor": "98e28ea91a9388da",
+    "daily_scores.healthspan": "a5c85ddec5479535",
+    "daily_scores.fitness": "acc03af566eaa295",
+    "daily_scores.journal_impact": "6b468b516e8f5d80",
+    "intraday_series.energy_bank": "8e94cc67e7e640ab",
+    "intraday_series.hr": "5ca83bb68dad9033",
+    "intraday_series.load": "859d8876596ad379",
+    "intraday_series.still_hr": "c0bf14266ee71abd",
+    "intraday_series.stress": "66d650df74998208",
+    reports: "4a7d67e69d1ee285",
+  },
 };
 
 // Numbers are rounded to 10 significant digits first, so a last-ulp difference in Math between Node

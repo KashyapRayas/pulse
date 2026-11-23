@@ -1,5 +1,13 @@
 // Ports ReadinessEngine.kt (HRV / RHR / resp z-signals, ACWR, Foster monotony → a level) and the
 // evaluateWithTrainingLoad wrapper from ReadinessTrainingLoad.kt. Not ported: the memo cache and copy ids.
+//
+// Departures from noop, to match the training-load literature:
+// - ACWR, monotony and CTL/ATL/TSB run on linear TRIMP (trimpFromEffort), never on log-scaled Effort. A ratio of
+//   logs is not a ratio of loads: on Effort a doubled week read ACWR 1.08 and an ordinary week monotony 2.8.
+// - ACWR is uncoupled: the acute week is compared with the 21 days before it, not with a 28-day window that
+//   contains it (Lolli 2019; Windt & Gabbett 2018). Coupling builds a spurious correlation into the ratio.
+// - A falling ratio (taper or rest week) is neutral, not a warning. ACWR's injury evidence is weak (Impellizzeri 2020).
+import { trimpFromEffort } from "./strain";
 import { foldHistory, isUsable, readinessHRVLnCfg, restingHRCfg } from "./baselines";
 import { readiness as readinessConfidence } from "./confidence";
 import { evaluate as evaluateTrainingLoad, standardConfig, type TrainingLoadConfig, type TrainingLoadResult } from "./trainingLoad";
@@ -50,7 +58,9 @@ export interface Readiness {
 export const baselineWindow = 30;
 export const minBaseline = 7;
 export const acuteWindow = 7;
+/** Acute plus chronic span; the chronic part is the 21 values before the acute 7. */
 export const chronicWindow = 28;
+/** Values needed before ACWR and monotony read: the acute week plus at least a week of chronic history. */
 export const minChronic = 14;
 export const respZWatch = 1.5;
 export const respZBad = 2.0;
@@ -105,8 +115,9 @@ function zSignal(
 export type AcwrBand = "LOAD_RAMPING_DOWN" | "LOAD_SWEET_SPOT" | "LOAD_BUILDING_FAST" | "LOAD_SPIKING";
 
 /**
- * The one ACWR banding (noop's): < 0.8 ramping down, [0.8, 1.3) sweet spot, [1.3, 1.5) building fast, ≥ 1.5 spiking.
- * Readiness, Reports and Fitness all band through this, so 1.30 and 1.50 read the same everywhere.
+ * The one ACWR banding: < 0.8 ramping down, [0.8, 1.3) sweet spot, [1.3, 1.5) building fast, ≥ 1.5 spiking (Gabbett 2016's
+ * bands, applied to the uncoupled linear-TRIMP ratio). Readiness, Reports and Fitness all band through this, so 1.30 and
+ * 1.50 read the same everywhere.
  */
 export function acwrBand(ratio: number): AcwrBand {
   if (ratio < 0.8) return "LOAD_RAMPING_DOWN";
@@ -115,7 +126,7 @@ export function acwrBand(ratio: number): AcwrBand {
   return "LOAD_SPIKING";
 }
 
-const ACWR_FLAG: Record<AcwrBand, ReadinessFlag> = { LOAD_RAMPING_DOWN: "watch", LOAD_SWEET_SPOT: "good", LOAD_BUILDING_FAST: "watch", LOAD_SPIKING: "bad" };
+const ACWR_FLAG: Record<AcwrBand, ReadinessFlag> = { LOAD_RAMPING_DOWN: "neutral", LOAD_SWEET_SPOT: "good", LOAD_BUILDING_FAST: "watch", LOAD_SPIKING: "bad" };
 
 export function acwrSignal(ratio: number, acute: number, chronic: number): ReadinessSignal {
   const detail = acwrBand(ratio);
@@ -165,20 +176,22 @@ export function evaluate(days: ReadinessDay[], today: string | null = null): Rea
     }
   }
 
-  const effort = pick(sorted, (d) => d.effort);
+  // Linear daily load: Effort is a log of TRIMP, so it is inverted before any mean, ratio or SD.
+  const load = pick(sorted, (d) => d.effort).map((e) => trimpFromEffort(e));
   let acwr: number | null = null;
   let monotony: number | null = null;
-  if (effort.length >= minChronic) {
-    const acute = mean(effort.slice(-acuteWindow)) as number;
-    const chronic = mean(effort.slice(-chronicWindow)) as number;
+  if (load.length >= minChronic) {
+    const acute = mean(load.slice(-acuteWindow)) as number;
+    const chronic = mean(load.slice(-chronicWindow, -acuteWindow)) as number;
     if (chronic > 0) {
       acwr = acute / chronic;
       signals.push(acwrSignal(acwr, acute, chronic));
     }
-    const week = effort.slice(-acuteWindow);
+    const week = load.slice(-acuteWindow);
     const sd = sampleSD(week);
     const m = mean(week);
-    if (week.length >= 4 && sd != null && sd > 0 && m != null) {
+    // A flat week has no spread; the relative tolerance keeps float noise from the TRIMP inversion from reading as one.
+    if (week.length >= 4 && sd != null && m != null && sd > 1e-9 * Math.max(1, m)) {
       monotony = m / sd;
       if (monotony >= monotonyWatch) {
         signals.push({ key: "monotony", flag: "watch", detail: "MONOTONY_WATCH", evidence: { kind: "monotony", value: monotony } });
@@ -191,7 +204,7 @@ export function evaluate(days: ReadinessDay[], today: string | null = null): Rea
   return { level, signals, acwr, monotony, confidence };
 }
 
-/** Readiness plus CTL/ATL/TSB over the same rows; training load never feeds the readiness level. */
+/** Readiness plus CTL/ATL/TSB (on linear TRIMP, Banister's additive dose) over the same rows; training load never feeds the readiness level. */
 export function evaluateWithTrainingLoad(
   days: ReadinessDay[],
   today: string | null = null,
@@ -200,7 +213,7 @@ export function evaluateWithTrainingLoad(
   return {
     readiness: evaluate(days, today),
     trainingLoad: evaluateTrainingLoad(
-      days.map((d) => ({ day: d.day, load: d.effort ?? null })),
+      days.map((d) => ({ day: d.day, load: d.effort == null ? null : trimpFromEffort(d.effort) })),
       today,
       config,
     ),

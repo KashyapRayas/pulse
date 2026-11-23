@@ -9,7 +9,7 @@ import { and, eq, gt, gte, inArray, lt, lte, notInArray, or, sql } from "drizzle
 import type { Db } from "../db";
 import { dailyScores, foldCheckpoints, intradayDirty, intradaySeries, journalEntries, reports, sleepSegments } from "../db/schema";
 import { addDays, daysBetween } from "../time";
-import { hrvCfg, respCfg, restingHRCfg, skinTempCfg, update } from "@/core/scoring/baselines";
+import { hrvCfg, hrvLnCfg, lnHrv, respCfg, restingHRCfg, skinTempCfg, update } from "@/core/scoring/baselines";
 import { journalImpact, type JournalDay, type TagImpact } from "@/core/algorithms/journalImpact";
 import { buildReport, periodBounds, reportPeriods } from "@/core/algorithms/reports";
 import { BATCH_DAYS, type Data, groupBy, type Segment, sha, upsertSeries } from "./data";
@@ -156,6 +156,7 @@ export async function stage2(db: Db, data: Data, opts: PipelineOptions, redone: 
 
     // Fold today's nightly values into the baselines (after scoring today).
     f.hrvB = update(f.hrvB, recovery.inputs.hrv, hrvCfg);
+    f.hrvLnB = update(f.hrvLnB, lnHrv(recovery.inputs.hrv), hrvLnCfg);
     f.rhrB = update(f.rhrB, recovery.inputs.rhr, restingHRCfg);
     f.respB = update(f.respB, recovery.inputs.resp, respCfg);
     f.skinB = update(f.skinB, d.dm?.nightlyTempC ?? null, skinTempCfg);

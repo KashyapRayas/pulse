@@ -1,6 +1,6 @@
 // Own algorithm (docs/algorithms/health-monitor.md): last night's five vitals against personal ranges
 // (Google's where the caller has them, else baseline mean ± 2σ from the Winsorized EWMA baselines; SpO2 also
-// floored at 95 %), plus noop's illness signal as the combined flag.
+// floored at 90 %), plus noop's illness signal as the combined flag.
 import { foldHistory, hrvCfg, isUsable, respCfg, restingHRCfg, sigma, skinTempCfg } from "../scoring/baselines";
 import { illnessFromDays, type IllnessContext, type IllnessDay, type IllnessResult } from "../scoring/illness";
 import type { MetricCfg } from "../scoring/types";
@@ -8,8 +8,11 @@ import type { MetricCfg } from "../scoring/types";
 export const healthMonitorConfig = {
   /** Range half-width in σ (spec). */
   rangeSigmas: 2,
-  /** SpO2 below this is low whatever the personal range (spec). */
-  spo2FloorPct: 95,
+  /**
+   * SpO2 below this is low whatever the personal range. 95 % is the awake fingertip norm; wrist *nightly* means sit
+   * lower (95.4 ± 1.5 % across 33,080 Apple Watch users) and Google calls night-time SpO2 "typically above 90%".
+   */
+  spo2FloorPct: 90,
   /** SpO2 baseline (*tunable*): plausible 70–100 %, floor spread 0.5 points. */
   spo2Cfg: { minVal: 70, maxVal: 100, floorSpread: 0.5, halfLifeB: 14, halfLifeS: 21 } as MetricCfg,
   /** Skin-temperature deviation baseline, °C (*tunable*): ±5 °C plausible, skin_temp's floor spread. */

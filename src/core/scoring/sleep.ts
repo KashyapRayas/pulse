@@ -1,6 +1,13 @@
 // Ports SleepStager.hypnogramMetrics (SleepStager.kt), RestScorer (AnalyticsEngine.kt L1505–1739: sleep
 // performance and need), SleepDebt.kt, and VitalityEngine.sleepConsistency (1 − CV). Rest's consistency input
 // is a plain [0, 1] number so U7 can pass SRI / 100 in its place.
+//
+// Departures from noop, to match the sleep literature:
+// - A term with no measurement (no stages, no consistency signal) drops out and the others renormalize. noop scored
+//   missing stages as 0 deep / 0 REM and missing consistency as a flat 50, both of which read "unknown" as "bad".
+// - The adult need floor is 7 h, the AASM/SRS minimum for adults (Watson 2015); 8 h for 13–17 and 9 h under 13 (AASM 2016).
+// - Debt accumulates: the whole shortfall counts the night it happens and decays by DEBT_DECAY per night
+//   (Van Dongen 2003, Belenky 2003, Kitamura 2016), instead of writing off 45 % at once.
 import type { HypnogramMetrics, SleepSession, Stage, StageSegment } from "./types";
 
 // ── Hypnogram ──────────────────────────────────────────────────────────────
@@ -75,15 +82,17 @@ export const maxNeedHours = 9.5;
 export const restorativeTargetShare = 0.5;
 export const deepShareTarget = 0.13;
 export const deepFloorFactor = 0.5;
-/** Used when no consistency signal is supplied (noop adds a neutral term, it does not renormalize). */
-export const NEUTRAL_CONSISTENCY = 0.5;
+
 
 const clamp = (x: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, x));
 
-/** Population target need for an age, used as a floor. */
+/**
+ * Population minimum need for an age, used as a floor: adults ≥ 7 h (AASM/SRS, Watson 2015; NSF 7–9 h, 7–8 h at 65+),
+ * teenagers 13–17 ≥ 8 h and children 6–12 ≥ 9 h (AASM, Paruthi 2016). Unknown age is treated as an adult.
+ */
 export function populationNeedFloorHours(age: number | null): number {
-  if (age == null || age <= 0) return 8.0;
-  return age < 18 ? 9.0 : 8.0;
+  if (age == null || age <= 0 || age >= 18) return 7.0;
+  return age < 13 ? 9.0 : 8.0;
 }
 
 /** Upper-quartile nightly hours, floored at the population target and capped at maxNeedHours. */
@@ -99,30 +108,37 @@ export function personalizedNeedHours(nightlyHours: number[], age: number | null
 }
 
 /**
- * Rest composite in [0, 100] (2 dp), or null with no asleep time.
+ * Rest composite in [0, 100] (2 dp), or null with no asleep time. A term without a measurement drops out and the
+ * remaining weights renormalize, so an unstaged night or a night without a regularity read is not penalised.
  * @param efficiency asleep / in-bed in [0, 1].
- * @param consistency sleep regularity in [0, 1]; null → NEUTRAL_CONSISTENCY.
+ * @param deepSeconds null when the night has no stages (then the restorative term drops; REM is ignored).
+ * @param remSeconds null when the night has no stages.
+ * @param consistency sleep regularity in [0, 1]; null drops the term.
  */
 export function rest(
   asleepSeconds: number,
   efficiency: number,
-  deepSeconds: number,
-  remSeconds: number,
+  deepSeconds: number | null,
+  remSeconds: number | null,
   sleepNeedHours: number | null = null,
   consistency: number | null = null,
 ): number | null {
   if (asleepSeconds <= 0.0) return null;
   const asleepHours = asleepSeconds / 3600.0;
   const needHours = Math.max(sleepNeedHours ?? defaultSleepNeedHours, 0.1);
-  const durationScore = Math.min(100.0, (asleepHours / needHours) * 100.0);
-  const efficiencyScore = clamp(efficiency * 100.0, 0.0, 100.0);
-  const restorativeShare = (deepSeconds + remSeconds) / asleepSeconds;
-  const deepAdequacy = clamp(deepSeconds / asleepSeconds / deepShareTarget, 0.0, 1.0);
-  const deepFactor = deepFloorFactor + (1.0 - deepFloorFactor) * deepAdequacy;
-  const restorativeScore = Math.min(100.0, (restorativeShare / restorativeTargetShare) * 100.0) * deepFactor;
-  const consistencyScore = clamp((consistency ?? NEUTRAL_CONSISTENCY) * 100.0, 0.0, 100.0);
-  const weighted =
-    wDuration * durationScore + wEfficiency * efficiencyScore + wRestorative * restorativeScore + wConsistency * consistencyScore;
+  const terms: [score: number, weight: number][] = [
+    [Math.min(100.0, (asleepHours / needHours) * 100.0), wDuration],
+    [clamp(efficiency * 100.0, 0.0, 100.0), wEfficiency],
+  ];
+  if (deepSeconds != null && remSeconds != null) {
+    const restorativeShare = (deepSeconds + remSeconds) / asleepSeconds;
+    const deepAdequacy = clamp(deepSeconds / asleepSeconds / deepShareTarget, 0.0, 1.0);
+    const deepFactor = deepFloorFactor + (1.0 - deepFloorFactor) * deepAdequacy;
+    terms.push([Math.min(100.0, (restorativeShare / restorativeTargetShare) * 100.0) * deepFactor, wRestorative]);
+  }
+  if (consistency != null) terms.push([clamp(consistency * 100.0, 0.0, 100.0), wConsistency]);
+  const totalWeight = terms.reduce((a, [, w]) => a + w, 0);
+  const weighted = terms.reduce((a, [s, w]) => a + s * w, 0) / totalWeight;
   return Math.round(weighted * 100.0) / 100.0;
 }
 
@@ -133,7 +149,8 @@ export function restFromTotals(
 ): number | null {
   const { totalSleepMin, efficiency } = night;
   if (totalSleepMin == null || efficiency == null || totalSleepMin <= 0.0) return null;
-  return rest(totalSleepMin * 60.0, efficiency, (night.deepMin ?? 0.0) * 60.0, (night.remMin ?? 0.0) * 60.0, null, consistency);
+  const staged = night.deepMin != null && night.remMin != null;
+  return rest(totalSleepMin * 60.0, efficiency, staged ? night.deepMin! * 60.0 : null, staged ? night.remMin! * 60.0 : null, null, consistency);
 }
 
 /**
@@ -154,7 +171,11 @@ export function sleepConsistency(nightlyHours: number[]): number | null {
 export const DEFAULT_WINDOW_NIGHTS = 14;
 /** Calculated debt below this clears; exactly 10 remains. */
 export const ON_TARGET_BAND_MIN = 10.0;
-export const DEBT_CARRY = 0.55;
+/**
+ * Share of yesterday's debt still owed tonight (*tunable*): a half-life of about 3 nights. A 2 h short night reads
+ * 120 → 96 → 77 → 61 min over on-target nights, and a chronic 1 h shortfall builds to about 4.8 h in 14 nights.
+ */
+export const DEBT_DECAY = 0.8;
 
 export interface SleepDebtNight {
   day: string;
@@ -187,13 +208,13 @@ export function round1(v: number): number {
 }
 
 const nextDebt = (needMin: number, currentDebt: number, sleptMin: number): number => {
-  const calculated = DEBT_CARRY * Math.max(needMin + currentDebt - sleptMin, 0.0);
+  const calculated = Math.max(DEBT_DECAY * currentDebt + needMin - sleptMin, 0.0);
   return calculated < ON_TARGET_BAND_MIN ? 0.0 : calculated;
 };
 
 /**
  * Ledger over the most recent `window` nights with usable sleep, from chronological `[day, totalSleepMin]`
- * rows. Each night: debt = 0.55 × max(0, need + debt − slept).
+ * rows. Each night: debt = max(0, DEBT_DECAY × debt + need − slept); surplus sleep repays it minute for minute.
  */
 export function ledger(
   series: [string, number | null][],

@@ -6,6 +6,7 @@ import {
   foldHistory,
   freshestCarried,
   hrvCfg,
+  hrvLnCfg,
   isoEpochDay,
   isTrusted,
   isUsable,
@@ -86,7 +87,8 @@ describe("plan scenarios", () => {
 });
 
 describe("BaselineSeedingTest", () => {
-  const hrvBase4 = () => foldHistory([58, 61, 60, 59], hrvCfg);
+  // Recovery scores HRV on ln(ms), so its baseline is folded from ln values.
+  const hrvBase4 = () => foldHistory([58, 61, 60, 59].map(Math.log), hrvLnCfg);
   const rhrBase4 = () => foldHistory([52, 51, 53, 52], restingHRCfg);
 
   it("below seed is not usable, recovery null", () => {
@@ -152,7 +154,7 @@ describe("deviation and rollingMeanSD", () => {
 
   it("keeps every noop metric config", () => {
     expect(Object.keys(metricCfg).sort()).toEqual(
-      ["daytime_hr", "daytime_rmssd", "hrv", "readiness_hrv_ln", "resp", "resting_hr", "skin_temp", "strain"].sort(),
+      ["daytime_hr", "daytime_rmssd", "hrv", "hrv_ln", "readiness_hrv_ln", "resp", "resting_hr", "skin_temp", "strain"].sort(),
     );
     expect(metricCfg.resp.floorSpread).toBe(0.5);
     expect(metricCfg.resting_hr.floorSpread).toBe(2);
