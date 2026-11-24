@@ -338,7 +338,7 @@ export function CheckInSheet() {
           <Button variant="ghost" size="icon-touch" aria-label={`Previous day, ${formatDay(prev, DAY.long)}`} onClick={() => go(prev)}>
             <ChevronLeft aria-hidden strokeWidth={2} className="size-5" />
           </Button>
-          <span className="min-w-28 text-center text-xs leading-4 font-bold tracking-[0.1em] uppercase">{dayLabel(day, today)}</span>
+          <span className="min-w-28 text-center text-xs leading-4 font-medium tracking-normal">{dayLabel(day, today)}</span>
           <Button variant="ghost" size="icon-touch" aria-label={`Next day, ${formatDay(next, DAY.long)}`} disabled={next > today} onClick={() => go(next)}>
             <ChevronRight aria-hidden strokeWidth={2} className="size-5" />
           </Button>
@@ -484,12 +484,12 @@ export function CheckInSheet() {
       <Dialog open={!!confirm} onOpenChange={(o) => !o && keepEditing()}>
         <DialogContent className="gap-5 bg-linear-to-b from-popover-top to-popover p-6 ring-1 ring-border sm:max-w-sm">
           <DialogHeader className="items-center pt-4 text-center">
-            <DialogTitle className="text-[15px] leading-5 font-bold tracking-[0.1em] uppercase">Dismiss journal?</DialogTitle>
+            <DialogTitle className="text-[15px] leading-5 font-medium tracking-normal">Dismiss journal?</DialogTitle>
             <DialogDescription className="text-[15px] leading-[22px] text-pretty text-foreground-secondary">
               Choosing “Yes” discards what you’ve entered. You can come back and complete this journal later.
             </DialogDescription>
           </DialogHeader>
-          <Label className="flex min-h-11 items-center gap-3 text-xs leading-4 font-bold tracking-[0.1em] uppercase">
+          <Label className="flex min-h-11 items-center gap-3 text-xs leading-4 font-medium tracking-normal">
             <Checkbox checked={quiet} onCheckedChange={(c) => setQuiet(c === true)} className="size-7 rounded-md" />
             Don’t show me this message again
           </Label>

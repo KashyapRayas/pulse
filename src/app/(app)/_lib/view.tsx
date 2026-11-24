@@ -85,6 +85,8 @@ export const STAT_ICON: Record<string, React.ReactNode> = {
   stress: <ChartSpline />,
   zones13: <HeartPulse />,
   zones45: <HeartPulse />,
+  mvpa: <HeartPulse />,
+  vigorous: <HeartPulse />,
   strength: <Dumbbell />,
   pace: <Gauge />,
   // Sleep summary rows carry an icon each, as the reference app's do [latest-sleep-1] (spec §11 F20).

@@ -13,8 +13,8 @@ import { Accordion as AccordionPrimitive } from "radix-ui"
 const ICON: Record<string, React.ReactNode> = {
   sleepHours: <Moon />,
   sri: <Moon />,
-  zone13: <Timer />,
-  zone45: <Timer />,
+  mvpa: <Timer />,
+  vigorous: <Timer />,
   strength: <Dumbbell />,
   steps: <Footprints />,
   vo2max: <CircleGauge />,
@@ -24,8 +24,8 @@ const ICON: Record<string, React.ReactNode> = {
 const SHOW: Record<string, { format: FormatKey; unit?: string; scale?: number }> = {
   sleepHours: { format: "duration", scale: 60 },
   sri: { format: "int", unit: "%" },
-  zone13: { format: "duration" },
-  zone45: { format: "duration" },
+  mvpa: { format: "duration" },
+  vigorous: { format: "duration" },
   strength: { format: "duration" },
   steps: { format: "grouped" },
   vo2max: { format: "decimal1", unit: "ml/kg/min" },

@@ -1,7 +1,10 @@
 // Ports RecoveryScorer.kt (Charge: z-scores against personal baselines through a logistic) and the
 // daily-aggregate gate from WatchRecovery.kt. Fitbit nightly HRV is a daily aggregate, so Recovery waits
 // for minBaselineNights accepted prior nights.
-import { foldHistory, hrvCfg, isUsable, restingHRCfg } from "./baselines";
+//
+// Departure from noop: the HRV term is z-scored on ln(RMSSD) against an ln-domain baseline (hrvLnCfg), as HRV
+// monitoring does, instead of raw milliseconds. The same relative change now moves the score alike at 25 and 100 ms.
+import { foldHistory, hrvLnCfg, isUsable, restingHRCfg } from "./baselines";
 import { forCharge } from "./confidence";
 import type { BaselineState, ScoreConfidence } from "./types";
 
@@ -73,13 +76,16 @@ export function zScore(value: number, mean: number, spread: number): number {
   return (value - mean) / Math.max(1.253 * spread, 1e-9);
 }
 
+/** HRV z on ln(ms) against an ln-domain baseline. */
+export const hrvZ = (hrvMs: number, lnBaseline: DriverBaseline): number => zScore(Math.log(Math.max(hrvMs, 1.0)), lnBaseline.mean, lnBaseline.spread);
+
 export interface RecoveryArgs {
-  /** RMSSD-like nightly HRV, ms. */
+  /** RMSSD-like nightly HRV, ms (z-scored as ln ms). */
   hrv: number;
   /** Resting HR, bpm. null drops the term (noop takes a non-null value; the term also needs a baseline). */
   rhr: number | null;
   resp?: number | null;
-  /** Required: null returns null. */
+  /** ln(ms) domain (hrvLnCfg). Required: null returns null. */
   hrvBaseline: DriverBaseline | null;
   rhrBaseline?: DriverBaseline | null;
   respBaseline?: DriverBaseline | null;
@@ -102,8 +108,8 @@ export function recovery(a: RecoveryArgs): number | null {
   if (!hrvB) return null;
 
   const terms: [z: number, w: number][] = [];
-  // Raw HRV z: the saturation easing is not applied here (instrument-first).
-  terms.push([zScore(a.hrv, hrvB.mean, hrvB.spread), wHRV]);
+  // ln(RMSSD) z: the saturation easing is not applied here (instrument-first).
+  terms.push([hrvZ(a.hrv, hrvB), wHRV]);
   if (a.rhrBaseline && a.rhr != null) terms.push([zScore(a.rhrBaseline.mean, a.rhr, a.rhrBaseline.spread), wRHR]);
   if (a.resp != null && a.respBaseline) terms.push([zScore(a.respBaseline.mean, a.resp, a.respBaseline.spread), wResp]);
   if (a.sleepPerf != null) terms.push([(a.sleepPerf - sleepPerfCenter) / sleepPerfScale, wSleep]);
@@ -161,7 +167,7 @@ export function gatedRecovery(a: GatedRecoveryArgs): { recovery: number | null; 
   return { recovery: score, confidence: forCharge(hrv, hrvBaseline) };
 }
 
-/** WatchRecovery.compute: HRV + RHR only, baselines folded from raw histories (oldest first). */
+/** WatchRecovery.compute: HRV + RHR only, baselines folded from raw histories (oldest first; HRV folded as ln ms). */
 export function watchRecovery(
   todayHrv: number | null,
   todayRhr: number | null,
@@ -171,7 +177,7 @@ export function watchRecovery(
   return gatedRecovery({
     hrv: todayHrv,
     rhr: todayRhr,
-    hrvBaseline: foldHistory(hrvHistory, hrvCfg),
+    hrvBaseline: foldHistory(hrvHistory.map((v) => (v > 0 ? Math.log(v) : null)), hrvLnCfg),
     rhrBaseline: foldHistory(rhrHistory, restingHRCfg),
   });
 }

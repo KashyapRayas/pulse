@@ -2,6 +2,12 @@
 
 Code: `src/core/algorithms/healthspan.ts`. Tests: `healthspan.test.ts`.
 
+> **v11 (2026-11-23):** the reference is now the age-typical, guideline-meeting person (VO2max at the FRIEND median,
+> 8,000 / 6,000 steps, WHO's 150 min/week of moderate-or-harder activity with vigorous as extra benefit); the activity
+> terms count ACSM intensity minutes (≥ 40 % and ≥ 60 % HRR) as `mvpa` and `vigorous`; a missing input adds 0 instead of
+> renormalizing by 9 / n; and strength counts only once a strength workout is logged. Tables below that still show the
+> old reference, curves on zones 1–3 / 4–5 and the 9 / n factor describe v10. See `docs/research/standards-audit-2026-11.md`.
+
 This is an estimate built from published population hazard ratios. It is not a clinical biological age, and the UI labels it as an estimate (KTD8). The method follows noop's `VitalityEngine.kt`. Each input maps to an all-cause-mortality log hazard ratio against a reference person. The terms are summed and shrunk for overlap, then turned into years with the Gompertz law. Ours differs from noop in the inputs, in the dose-response curves (pinned below from the papers), and in the gates.
 
 ## Flow

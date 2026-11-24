@@ -2,6 +2,12 @@
 // hazard ratio through a piecewise-linear dose-response curve pinned from a cited paper. The terms are
 // taken against a reference profile, summed and shrunk for overlap, then turned into years with the
 // Gompertz doubling time. The method follows noop's VitalityEngine.kt; the curves and the gates are ours.
+//
+// Calibration: like other biological-age measures (e.g. Nes 2014's fitness age), the reference is the age-typical
+// person meeting the guidelines, so an average person scores about their own age: VO2max at the FRIEND median for age
+// and sex, steps at the start of Paluch 2022's plateau, and WHO 2020's 150 min/week of moderate-or-harder activity.
+// A missing input contributes nothing (it is not renormalized onto the others), and strength counts only once a
+// strength workout has been logged in the window, since "never logged" is not "never trained".
 import { isoEpochDay } from "../scoring/baselines";
 import { piecewiseLinear, referenceVo2max, type Knots, type Sex } from "./fitnessLevel";
 
@@ -16,10 +22,10 @@ export interface HealthspanDay {
   sleepHours?: number | null;
   /** Trailing 7-day SRI on [−100, 100], from sleepRegularityIndex. */
   sri?: number | null;
-  /** Minutes in %HRmax zones 1–3 that day. */
-  zone13Min?: number | null;
-  /** Minutes in %HRmax zones 4–5 that day. */
-  zone45Min?: number | null;
+  /** Minutes at moderate intensity or harder that day: ≥ 40 % of heart-rate reserve (ACSM, Garber 2011). */
+  mvpaMin?: number | null;
+  /** Minutes at vigorous intensity that day: ≥ 60 % of heart-rate reserve (ACSM, Garber 2011). */
+  vigorousMin?: number | null;
   /** Strength-workout minutes; 0 on a worn day without one. */
   strengthMin?: number | null;
   steps?: number | null;
@@ -61,14 +67,14 @@ export const curves = {
   sleepHours: lnHr([[5, 1.12], [7, 1], [8, 1], [9, 1.3]]),
   // SRI. Windred 2024 Sleep, Tables 1–2 (full model): quintile medians, HR vs Q1.
   sri: lnHr([[65.1, 1], [75.62, 0.8], [80.99, 0.75], [85.22, 0.72], [89.8, 0.7]]),
-  // Min/week. Ekelund 2019 BMJ, Suppl. Table 5: MVPA spline in min/day (× 7 here), HR vs ~0 min/day.
-  zone13: lnHr(
+  // Min/week at ≥ 40 % HRR. Ekelund 2019 BMJ, Suppl. Table 5: MVPA spline in min/day (× 7 here), HR vs ~0 min/day.
+  mvpa: lnHr(
     [[0, 1], [2, 0.89], [4, 0.79], [6, 0.7], [8, 0.62], [10, 0.56], [12, 0.5], [14, 0.46], [16, 0.43], [18, 0.41], [20, 0.4], [22, 0.4], [24, 0.39]]
       .map(([perDay, hr]): [number, number] => [perDay * 7, hr]),
   ),
-  // Min/week. Lee 2022 Circulation, vigorous adjusted for moderate: 75–149 → 0.81, 150–299 → 2–4 % lower,
-  // ≥ 300 no further benefit; at category midpoints (approximation).
-  zone45: lnHr([[0, 1], [112, 0.81], [225, 0.81 * 0.97]]),
+  // Min/week at ≥ 60 % HRR. Lee 2022 Circulation, vigorous adjusted for moderate: 75–149 → 0.81, 150–299 → 2–4 %
+  // lower, ≥ 300 no further benefit; at category midpoints (approximation). Benefit on top of the MVPA term.
+  vigorous: lnHr([[0, 1], [112, 0.81], [225, 0.81 * 0.97]]),
   // Min/week. Momma 2022 BJSM: J-shape, nadir RR 0.83 at 40 min/week, RR < 1 up to ~140 min/week.
   strength: lnHr([[0, 1], [40, 0.83], [140, 1]]),
   // Fat-free mass index, kg/m². Sedlmeier 2021 AJCN: FFMI 21.9 vs 16.1 → HR 0.70.
@@ -78,7 +84,7 @@ export const curves = {
 export type HealthspanInput = keyof typeof curves;
 
 export const healthspanConfig = {
-  /** Shrink on Σ ln HR for correlated inputs (*tunable*; noop VitalityEngine.kt uses 0.75). */
+  /** Shrink on Σ ln HR for correlated inputs (*tunable*; noop VitalityEngine.kt uses 0.75). Missing inputs add 0. */
   overlapShrink: 0.75,
   /** Gompertz mortality-rate doubling time, years (Finch et al. 1990: about 8). */
   doublingYears: 8,
@@ -95,17 +101,21 @@ export const healthspanConfig = {
   paceWindowDays: 30,
   /** Fewer days with any input → provisional. */
   minDays: 20,
-  /** Fewer terms → no result, since renormalizing would multiply a few terms too far (*tunable*). */
+  /** Fewer terms → no result: a Pulse Age from a handful of inputs says too little (*tunable*). */
   minTerms: 5,
-  /** Paluch 2022: the step count where benefit plateaus, used as cap and reference (< 60: 8–10k; ≥ 60: 6–8k). */
+  /** Paluch 2022: steps where the benefit has fully levelled off, used as the cap (< 60: 8–10k; ≥ 60: 6–8k). */
   stepsPlateau: { under60: 10_000, from60: 8_000 },
+  /** Paluch 2022: where the plateau starts, used as the reference; in line with Ding 2025's 5–7k inflection. */
+  stepsReference: { under60: 8_000, from60: 6_000 },
   /** The reference profile besides VO2max and steps (*tunable* targets; see the doc for each). */
   reference: {
     restingHr: 60,
     sleepHours: 7.5,
     sri: 86.3,
-    zone13: 150,
-    zone45: 75,
+    /** WHO 2020: at least 150 min/week of moderate-intensity activity (vigorous minutes count here too). */
+    mvpa: 150,
+    /** Lee 2022's vigorous benefit is on top of moderate activity, so the guideline-meeting reference does none. */
+    vigorous: 0,
     strength: 40,
     leanMass: { male: 18.9, female: 15.4 },
   },
@@ -114,15 +124,15 @@ export const healthspanConfig = {
 /** The profile that scores Pulse Age = chronological age. */
 export function referenceProfile(age: number, sex: Sex): Record<HealthspanInput, number> {
   const r = healthspanConfig.reference;
-  const p = healthspanConfig.stepsPlateau;
+  const p = healthspanConfig.stepsReference;
   return {
     vo2max: referenceVo2max(age, sex),
     restingHr: r.restingHr,
     steps: age < 60 ? p.under60 : p.from60,
     sleepHours: r.sleepHours,
     sri: r.sri,
-    zone13: r.zone13,
-    zone45: r.zone45,
+    mvpa: r.mvpa,
+    vigorous: r.vigorous,
     strength: r.strength,
     leanMass: r.leanMass[sex],
   };
@@ -161,8 +171,11 @@ const mean = (xs: (number | null | undefined)[]): number | undefined => {
   return v.length ? v.reduce((a, b) => a + b, 0) / v.length : undefined;
 };
 
-/** Window means; minutes become weekly (mean daily × 7). Inputs without data are absent. */
-function summarize(days: HealthspanDay[], heightCm: number | null | undefined, run: boolean): Summary {
+/**
+ * Window means; minutes become weekly (mean daily × 7). Inputs without data are absent. Strength is absent unless
+ * `strengthLogged` (a strength workout somewhere in the 6-month window).
+ */
+function summarize(days: HealthspanDay[], heightCm: number | null | undefined, run: boolean, strengthLogged: boolean): Summary {
   const week = (xs: (number | null | undefined)[]) => {
     const m = mean(xs);
     return m == null ? undefined : m * 7;
@@ -174,9 +187,9 @@ function summarize(days: HealthspanDay[], heightCm: number | null | undefined, r
     steps: mean(days.map((d) => d.steps)),
     sleepHours: mean(days.map((d) => d.sleepHours)),
     sri: mean(days.map((d) => d.sri)),
-    zone13: week(days.map((d) => d.zone13Min)),
-    zone45: week(days.map((d) => d.zone45Min)),
-    strength: week(days.map((d) => d.strengthMin)),
+    mvpa: week(days.map((d) => d.mvpaMin)),
+    vigorous: week(days.map((d) => d.vigorousMin)),
+    strength: strengthLogged ? week(days.map((d) => d.strengthMin)) : undefined,
     leanMass:
       h2 == null
         ? undefined
@@ -185,17 +198,17 @@ function summarize(days: HealthspanDay[], heightCm: number | null | undefined, r
   return Object.fromEntries(Object.entries(s).filter(([, v]) => v != null));
 }
 
-/** Unclamped Δage and its per-input years, or null below minTerms. Missing terms renormalize the rest. */
-function deltaAge(s: Summary, ref: Record<HealthspanInput, number>, vo2Weight: number) {
+/** Unclamped Δage and its per-input years, or null below minTerms. Missing terms contribute 0. */
+function deltaAge(s: Summary, ref: Record<HealthspanInput, number>, vo2Weight: number, stepsCap: number) {
   const cfg = healthspanConfig;
   const all = Object.keys(curves) as HealthspanInput[];
   const present = all.filter((k) => s[k] != null);
   if (present.length < cfg.minTerms) return null;
-  const toYears = (cfg.overlapShrink * (all.length / present.length)) / (Math.LN2 / cfg.doublingYears);
+  const toYears = cfg.overlapShrink / (Math.LN2 / cfg.doublingYears);
   const contributions = present.map((key): HealthspanContribution => {
     const value = s[key]!;
     // Steps beyond the age plateau earn nothing more (Paluch 2022).
-    const x = key === "steps" ? Math.min(value, ref.steps) : value;
+    const x = key === "steps" ? Math.min(value, stepsCap) : value;
     const lnHazard = piecewiseLinear(curves[key], x) - piecewiseLinear(curves[key], ref[key]);
     return { key, value, reference: ref[key], years: lnHazard * (key === "vo2max" ? vo2Weight : 1) * toYears };
   });
@@ -222,13 +235,15 @@ export function healthspan(days: HealthspanDay[], profile: HealthspanProfile, as
     });
   const sixMonths = within(cfg.ageWindowDays);
   const run = within(cfg.runVo2maxLookbackDays).some((d) => d.vo2maxRun != null);
+  const strengthLogged = sixMonths.some((d) => (d.strengthMin ?? 0) > 0);
   const ref = referenceProfile(profile.age, profile.sex);
-  const long = summarize(sixMonths, profile.heightCm, run);
-  // A term with no data lately keeps its 6-month value, so both windows renormalize alike.
-  const short = { ...long, ...summarize(within(cfg.paceWindowDays), profile.heightCm, run) };
+  const stepsCap = profile.age < 60 ? cfg.stepsPlateau.under60 : cfg.stepsPlateau.from60;
+  const long = summarize(sixMonths, profile.heightCm, run, strengthLogged);
+  // A term with no data lately keeps its 6-month value, so both windows hold the same inputs.
+  const short = { ...long, ...summarize(within(cfg.paceWindowDays), profile.heightCm, run, strengthLogged) };
   const vo2Weight = run ? 1 : cfg.dailyVo2maxWeight;
-  const a = deltaAge(long, ref, vo2Weight);
-  const b = deltaAge(short, ref, vo2Weight);
+  const a = deltaAge(long, ref, vo2Weight, stepsCap);
+  const b = deltaAge(short, ref, vo2Weight, stepsCap);
   if (!a || !b) return null;
 
   const deltaYears = clamp(a.years, -cfg.clampYears, cfg.clampYears);

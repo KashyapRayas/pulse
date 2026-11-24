@@ -8,7 +8,8 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/80",
+        // Linear's primary: the indigo accent, a touch brighter on hover.
+        default: "bg-primary text-primary-foreground hover:brightness-110",
         outline:
           "border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
         secondary:
@@ -18,8 +19,8 @@ const buttonVariants = cva(
         destructive:
           "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40",
         link: "text-primary underline-offset-4 hover:underline",
-        // The second action in sheets and the info card ("Delete", "Open trend view"), spec §5 v2.
-        "outline-pill": "rounded-full bg-transparent text-foreground ring-1 ring-foreground/70 hover:bg-foreground/[0.06]",
+        // The second action in sheets and the info card ("Delete", "Open trend view"): Linear's bordered secondary.
+        "outline-pill": "rounded-lg bg-transparent text-foreground ring-1 ring-border hover:bg-foreground/[0.05]",
       },
       size: {
         default:
@@ -35,10 +36,10 @@ const buttonVariants = cva(
         "icon-lg": "size-9",
         // Pulse touch sizes (spec §5.0): every text button in content and sheets, and every icon button.
         touch:
-          "h-11 gap-2 rounded-xl px-4 text-[13px] font-bold tracking-[0.1em] uppercase [&_svg:not([class*='size-'])]:size-5",
-        "icon-touch": "size-11 rounded-full [&_svg:not([class*='size-'])]:size-5",
-        // Sheet footer pills (spec §3.4 "Sheet primary button", [latest-sheet-edit-1]).
-        sheet: "h-14 w-full gap-2 rounded-full px-6 text-[15px] font-bold tracking-[0.1em] uppercase [&_svg:not([class*='size-'])]:size-5",
+          "h-11 gap-2 rounded-xl px-4 text-[13px] font-medium tracking-normal [&_svg:not([class*='size-'])]:size-5",
+        "icon-touch": "size-11 rounded-lg [&_svg:not([class*='size-'])]:size-5",
+        // Sheet footer buttons: full width, Linear's 8 px corners.
+        sheet: "h-12 w-full gap-2 rounded-lg px-6 text-[14px] font-medium tracking-normal [&_svg:not([class*='size-'])]:size-5",
       },
     },
     defaultVariants: {

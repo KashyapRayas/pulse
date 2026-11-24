@@ -23,8 +23,12 @@ import type { StrainTarget } from "@/core/algorithms/strainTarget";
  * display zones on heart-rate reserve (Strain's and WHOOP's 50/60/70/80/90%) in place of Google's four. 8: max HR
  * no longer from Google's PEAK zone (a flat 220), so zones and Strain use the person's own or Tanaka's.
  * 10: each Healthspan factor keeps its 30-day mean beside the 6-month one (health-whoop-age-sleep-factors's two markers).
+ * 11: scores checked against current standards (docs/research/standards-audit-2026-11.md): ACWR, monotony and
+ * CTL/ATL/TSB on linear TRIMP with an uncoupled ACWR; Recovery's HRV on ln(RMSSD); unstaged nights and missing SRI drop
+ * out of sleep performance instead of scoring 0 and 50; a 7 h adult need floor and an accumulating sleep debt; Pulse Age
+ * referenced to the age-typical, guideline-meeting person with ACSM intensity minutes; Cooper fitness bands; SpO2 floor 90 %.
  */
-export const SCORING_VERSION = 10;
+export const SCORING_VERSION = 11;
 
 export type PipelineOptions = {
   /** Whose data: every read and write is scoped to this user. */
@@ -55,6 +59,8 @@ export type Stage1Day = {
   zoneSeconds: number[];
   /** Seconds below Zone 1 ("Zone 0"); absent on days stored before version 9. */
   zoneBelowSeconds?: number;
+  /** Minutes at ACSM moderate-or-harder (≥ 40 % HRR) and vigorous (≥ 60 % HRR) intensity; absent before version 11. */
+  intensityMin?: { moderatePlus: number; vigorous: number };
   /** Stress Monitor's resting daytime HR for the day (independent of the baseline). */
   dayAggregate: number | null;
   stillMinutes: number;

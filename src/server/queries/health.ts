@@ -135,22 +135,24 @@ const HS_META: Record<string, Omit<HealthspanContributor, "metric" | "recent" | 
     explanation: "Going to bed and waking at the same times predicts a longer life even more strongly than how long you sleep.",
     source: "Windred 2024",
   },
-  zone13: {
+  mvpa: {
     group: "strain",
-    label: "Heart rate zones 1-3",
+    label: "Moderate or harder activity",
     unit: "min",
     domain: [0, 300],
     higherIsBetter: true,
-    explanation: "Moderate activity is linked to steeply lower mortality, with most of the benefit in the first 150 minutes a week.",
-    source: "Ekelund 2019",
+    explanation:
+      "Time with your heart rate at 40% of its reserve or more. Moderate activity is linked to steeply lower mortality; WHO advises at least 150 minutes a week.",
+    source: "Ekelund 2019, WHO 2020",
   },
-  zone45: {
+  vigorous: {
     group: "strain",
-    label: "Heart rate zones 4-5",
+    label: "Vigorous activity",
     unit: "min",
     domain: [0, 150],
     higherIsBetter: true,
-    explanation: "Vigorous activity adds benefit on top of moderate activity. About 75 to 150 minutes a week is where it levels off.",
+    explanation:
+      "Time at 60% of your heart-rate reserve or more. It adds benefit on top of moderate activity, levelling off around 150 minutes a week, so any amount helps.",
     source: "Lee 2022",
   },
   strength: {
@@ -168,8 +170,8 @@ const HS_META: Record<string, Omit<HealthspanContributor, "metric" | "recent" | 
     unit: "steps",
     domain: [0, 15000],
     higherIsBetter: true,
-    explanation: "More daily steps go with lower mortality, levelling off around 8,000 to 10,000 steps a day.",
-    source: "Paluch 2022",
+    explanation: "More daily steps go with lower mortality. The benefit levels off from about 8,000 steps a day (6,000 from age 60).",
+    source: "Paluch 2022, Ding 2025",
   },
   vo2max: {
     group: "fitness",
@@ -200,13 +202,13 @@ const HS_META: Record<string, Omit<HealthspanContributor, "metric" | "recent" | 
     source: "Sedlmeier 2021",
   },
 };
-const HS_ORDER = ["sleepHours", "sri", "zone13", "zone45", "strength", "steps", "vo2max", "restingHr", "leanMass"];
+const HS_ORDER = ["sleepHours", "sri", "mvpa", "vigorous", "strength", "steps", "vo2max", "restingHr", "leanMass"];
 /** Each factor's Trend View (health-whoop-age-sleep-factors's VIEW TREND). */
 const HS_TREND: Record<string, TrendViewKey> = {
   sleepHours: "hours",
   sri: "consistency",
-  zone13: "zones13",
-  zone45: "zones45",
+  mvpa: "mvpa",
+  vigorous: "vigorous",
   strength: "strength",
   steps: "steps",
   vo2max: "vo2max",
@@ -243,7 +245,11 @@ export async function getHealthspan(day: string, ctx: QueryCtx): Promise<Healths
           : "Estimated: counts half"
         : key === "leanMass" && !c
           ? "No lean body mass: add weight and body fat in Fitbit. Left out of Pulse Age."
-          : undefined;
+          : key === "strength" && !c
+            ? "No strength workouts logged in 6 months. Left out of Pulse Age."
+            : key === "vigorous" && c
+              ? "Extra benefit on top of moderate activity"
+              : undefined;
     const domain: [number, number] = key === "leanMass" && c ? [target * 0.75, target * 1.25] : meta.domain;
     return {
       key,
@@ -286,8 +292,10 @@ function healthspanInsight(pace: number, cs: HealthspanContribution[]) {
   const worst = [...cs].sort((a, b) => b.years - a.years)[0];
   const label = (c: HealthspanContribution) => HS_META[c.key].label.toLowerCase();
   const parts = [`Your Pace of Aging is ${pace.toFixed(1)}x against your 6-month average.`];
-  if (best && best.years < 0) parts.push(`Your biggest boost is ${label(best)}, worth ${Math.abs(best.years).toFixed(1)} years.`);
-  if (worst && worst.years > 0) parts.push(`${HS_META[worst.key].label} adds the most, ${worst.years.toFixed(1)} years.`);
+  // Compared as shown (one decimal), so a factor never "adds the most, 0.0 years".
+  const shown = (y: number) => Math.round(y * 10) / 10;
+  if (best && shown(best.years) < 0) parts.push(`Your biggest boost is ${label(best)}, worth ${Math.abs(best.years).toFixed(1)} years.`);
+  if (worst && shown(worst.years) > 0) parts.push(`${HS_META[worst.key].label} adds the most, ${worst.years.toFixed(1)} years.`);
   return { title, body: parts.join(" ") };
 }
 

@@ -18,34 +18,36 @@ const raw = (mean: number, spread: number): BaselineState => ({
   nightsSinceUpdate: 0,
   status: "trusted",
 });
+/** An HRV baseline in ln units (what Recovery scores against) from a mean and σ in ms (σ_ln ≈ σ / mean). */
+const lnBaseline = (meanMs: number, sigmaMs: number, nValid = 14): BaselineState => baseline(Math.log(meanMs), sigmaMs / meanMs, nValid);
 const row = (drivers: ReturnType<typeof chargeDrivers>, label: string) => drivers.find((d) => d.label === label)!;
 
 describe("RecoveryDriversTest", () => {
+  // Recovery scores HRV on ln(ms), so these HRV baselines are in ln units and the tie inputs were searched for in that
+  // domain: each "tie" makes full − neutral exactly ±0.5 under V8, and its float neighbours fall either side.
   it("point rounding is nearest with half-ties away from zero", () => {
     const marginal = (hrv: number, rhr: number, hrvBaseline: BaselineState, rhrBaseline: BaselineState | null = null) => {
       const full = recoveryFromStates({ hrv, rhr, hrvBaseline, rhrBaseline })!;
-      const neutral = recoveryFromStates({ hrv: hrvBaseline.baseline, rhr, hrvBaseline, rhrBaseline })!;
+      const neutral = recoveryFromStates({ hrv: Math.exp(hrvBaseline.baseline), rhr, hrvBaseline, rhrBaseline })!;
       const r = row(chargeDrivers({ hrv, rhr, hrvBaseline, rhrBaseline }), "HEART_RATE_VARIABILITY");
       return [full - neutral, r.deltaPoints] as const;
     };
-    const neg = raw(30, 0.55);
-    const nBelow = marginal(29.991177275907276, 60, neg);
-    const nBeyond = marginal(29.991177240671185, 60, neg);
+    const neg = raw(Math.log(30), 0.02568);
+    const nBelow = marginal(29.987644290157103, 60, neg);
+    const nTie = marginal(29.98764429015709, 60, neg);
+    const nBeyond = marginal(29.987644290157085, 60, neg);
     expect(nBelow[0]).toBeGreaterThan(-0.5);
     expect(nBelow[1]).toBe(0);
-    expect(nBeyond[0]).toBeLessThan(-0.5);
-    expect(nBeyond[1]).toBe(-1);
-    // noop's exact tie (29.99117725828923) lands one ULP short of -0.5 here: V8's Math.exp differs from the
-    // JVM / Swift libm by an ULP. Same rule on a tie that is exact under V8:
-    expect(marginal(29.99117725828923, 60, neg)[0]).toBeCloseTo(-0.5, 12);
-    const nTie = marginal(29.987696285650618, 60, raw(30, 0.767));
     expect(nTie[0]).toBe(-0.5);
     expect(nTie[1]).toBe(-1);
+    expect(nBeyond[0]).toBeLessThan(-0.5);
+    expect(nBeyond[1]).toBe(-1);
 
+    const pos = raw(Math.log(30), 0.0183);
     const posRhr = raw(60, 0.1);
-    const pBelow = marginal(33.09890762408082, 58.541, neg, posRhr);
-    const pTie = marginal(33.099135135290354, 58.541, neg, posRhr);
-    const pBeyond = marginal(33.09936273466694, 58.541, neg, posRhr);
+    const pBelow = marginal(33.25862260005283, 58.541, pos, posRhr);
+    const pTie = marginal(33.25862260005329, 58.541, pos, posRhr);
+    const pBeyond = marginal(33.2587, 58.541, pos, posRhr);
     expect(pBelow[0]).toBeLessThan(0.5);
     expect(pBelow[1]).toBe(0);
     expect(pTie[0]).toBe(0.5);
@@ -55,17 +57,17 @@ describe("RecoveryDriversTest", () => {
   });
 
   it("issue 51: a negative half-tie row (V8-exact tie, see above)", () => {
-    const hrvBaseline = raw(30, 0.767);
-    const hrv = 29.987696285650618;
+    const hrvBaseline = raw(Math.log(30), 0.02568);
+    const hrv = 29.98764429015709;
     const before = recoveryFromStates({ hrv, rhr: 60, hrvBaseline })!;
-    const neutral = recoveryFromStates({ hrv: 30, rhr: 60, hrvBaseline })!;
+    const neutral = recoveryFromStates({ hrv: Math.exp(hrvBaseline.baseline), rhr: 60, hrvBaseline })!;
     expect(before - neutral).toBe(-0.5);
     expect(chargeDrivers({ hrv, rhr: 60, hrvBaseline })).toEqual([
       {
         label: "HEART_RATE_VARIABILITY",
         deltaPoints: -1,
         value: hrv,
-        baseline: 30,
+        baseline: Math.exp(Math.log(30)),
         unit: "MILLISECONDS",
         verdict: "SLIGHTLY_BELOW_BASELINE_LIMITING",
       },
@@ -94,7 +96,7 @@ describe("RecoveryDriversTest", () => {
   });
 
   it("an RHR row cannot say above when the displayed values match", () => {
-    const d = chargeDrivers({ hrv: 50, rhr: 51.3, hrvBaseline: baseline(50, 6), rhrBaseline: baseline(50.8, 0.1) });
+    const d = chargeDrivers({ hrv: 50, rhr: 51.3, hrvBaseline: lnBaseline(50, 6), rhrBaseline: baseline(50.8, 0.1) });
     const rhr = row(d, "RESTING_HEART_RATE");
     expect(Math.round(rhr.value)).toBe(51);
     expect(Math.round(rhr.baseline!)).toBe(51);
@@ -107,7 +109,7 @@ describe("RecoveryDriversTest", () => {
       hrv: 62,
       rhr: 51,
       resp: 15,
-      hrvBaseline: baseline(50, 6),
+      hrvBaseline: lnBaseline(50, 6),
       rhrBaseline: baseline(55, 3),
       respBaseline: baseline(16, 2),
       sleepPerf: 0.9,
@@ -121,11 +123,13 @@ describe("RecoveryDriversTest", () => {
     for (const label of ["HEART_RATE_VARIABILITY", "RESTING_HEART_RATE", "RESPIRATORY_RATE"]) {
       expect(row(d, label).baseline).not.toBeNull();
     }
-    expect(row(d, "HEART_RATE_VARIABILITY")).toMatchObject({ value: 62, baseline: 50, unit: "MILLISECONDS" });
+    expect(row(d, "HEART_RATE_VARIABILITY")).toMatchObject({ value: 62, unit: "MILLISECONDS" });
+    // The row shows the ln baseline's geometric mean, back in ms.
+    expect(row(d, "HEART_RATE_VARIABILITY").baseline).toBeCloseTo(50, 9);
   });
 
   it("a missing input yields no row, not a fake zero", () => {
-    const labels = chargeDrivers({ hrv: 55, rhr: 55, hrvBaseline: baseline(50, 6), sleepPerf: 0.85 }).map((r) => r.label);
+    const labels = chargeDrivers({ hrv: 55, rhr: 55, hrvBaseline: lnBaseline(50, 6), sleepPerf: 0.85 }).map((r) => r.label);
     expect(labels).toEqual(expect.arrayContaining(["HEART_RATE_VARIABILITY", "SLEEP_QUALITY"]));
     expect(labels).not.toContain("RESTING_HEART_RATE");
     expect(labels).not.toContain("RESPIRATORY_RATE");
@@ -133,7 +137,7 @@ describe("RecoveryDriversTest", () => {
   });
 
   it("delta sign tracks direction", () => {
-    const d = chargeDrivers({ hrv: 80, rhr: 70, hrvBaseline: baseline(50, 6), rhrBaseline: baseline(55, 3) });
+    const d = chargeDrivers({ hrv: 80, rhr: 70, hrvBaseline: lnBaseline(50, 6), rhrBaseline: baseline(55, 3) });
     expect(row(d, "HEART_RATE_VARIABILITY")).toMatchObject({ verdict: "ABOVE_BASELINE_SUPPORTING" });
     expect(row(d, "HEART_RATE_VARIABILITY").deltaPoints).toBeGreaterThan(0);
     expect(row(d, "RESTING_HEART_RATE")).toMatchObject({ verdict: "ABOVE_BASELINE_LIMITING" });
@@ -142,7 +146,7 @@ describe("RecoveryDriversTest", () => {
 
   it("skin temp is a relative deviation, never absolute, and never lifts Charge", () => {
     const skin = row(
-      chargeDrivers({ hrv: 50, rhr: 55, hrvBaseline: baseline(50, 6), rhrBaseline: baseline(55, 3), skinTempDev: 0.4 }),
+      chargeDrivers({ hrv: 50, rhr: 55, hrvBaseline: lnBaseline(50, 6), rhrBaseline: baseline(55, 3), skinTempDev: 0.4 }),
       "SKIN_TEMPERATURE",
     );
     expect(skin).toMatchObject({ unit: "CELSIUS_DEVIATION", value: 0.4, baseline: null });
@@ -155,7 +159,7 @@ describe("RecoveryDriversTest", () => {
         hrv: 46,
         rhr: 58,
         resp: 14,
-        hrvBaseline: baseline(51, 6.265),
+        hrvBaseline: lnBaseline(51, 6.265),
         rhrBaseline: baseline(58, 5.012, 12),
         respBaseline: baseline(15, 1.8795, 12),
         sleepPerf: 0.9,
@@ -186,7 +190,7 @@ describe("RecoveryDriversTest", () => {
 
 describe("RecoverySaturationGuardTest: drivers", () => {
   it("the HRV verdict names saturation but the penalty stays full", () => {
-    const hrvBaseline = baseline(50, 6.265);
+    const hrvBaseline = lnBaseline(50, 6.265);
     const rhrBaseline = baseline(55, 5.0);
     const sat = row(chargeDrivers({ hrv: 41, rhr: 48, hrvBaseline, rhrBaseline }), "HEART_RATE_VARIABILITY");
     expect(sat.verdict).toBe("HRV_SATURATION_LIMITING");
@@ -206,7 +210,7 @@ describe("RecoveryRhrBaselineUsableTest: drivers", () => {
     status,
   });
   const rows = (rhrBaseline: BaselineState | null) =>
-    chargeDrivers({ hrv: 55, rhr: 62, hrvBaseline: state(55, 12, "trusted", 20), rhrBaseline, sleepPerf: 0.85 });
+    chargeDrivers({ hrv: 55, rhr: 62, hrvBaseline: state(Math.log(55), 12 / 55, "trusted", 20), rhrBaseline, sleepPerf: 0.85 });
 
   it("an unusable RHR baseline produces no row, identical to none", () => {
     const synthetic = state(75, 6, "calibrating", 0);
@@ -224,7 +228,7 @@ describe("plan scenarios", () => {
       hrv: 54,
       rhr: 54,
       resp: 15.3,
-      hrvBaseline: baseline(50, 6),
+      hrvBaseline: lnBaseline(50, 6),
       rhrBaseline: baseline(55, 3),
       respBaseline: baseline(15.5, 1),
       sleepPerf: 0.9,

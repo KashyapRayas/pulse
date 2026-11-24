@@ -44,12 +44,14 @@ describe("healthMonitor", () => {
     expect((rhr.range!.high + rhr.range!.low) / 2).toBeCloseTo(55, 0);
   });
 
-  it("SpO2 94 is flagged even inside the personal range, and SpO2 is never high", () => {
-    const wide = history({}, 40).map((d, i) => ({ ...d, spo2: i % 2 ? 92 : 98 }));
-    const r = healthMonitor([...wide, { ...wide[0], day: iso(40), spo2: 94 }]);
+  it("SpO2 below 90 is flagged even inside the personal range, 94 is not, and SpO2 is never high", () => {
+    const wide = history({}, 40).map((d, i) => ({ ...d, spo2: i % 2 ? 84 : 98 }));
+    const r = healthMonitor([...wide, { ...wide[0], day: iso(40), spo2: 89 }]);
     const spo2 = r.vitals.find((v) => v.key === "spo2")!;
     expect(spo2.status).toBe("low");
-    expect(spo2.range).toEqual({ low: 95, high: 100 });
+    expect(spo2.range).toEqual({ low: 90, high: 100 });
+    // A nightly 94 % is ordinary on a wrist device (mean 95.4 ± 1.5 %).
+    expect(healthMonitor([...wide, { ...wide[0], day: iso(40), spo2: 94 }]).vitals.find((v) => v.key === "spo2")!.status).toBe("in_range");
     expect(status(history({ spo2: 100 })).spo2).toBe("in_range");
   });
 

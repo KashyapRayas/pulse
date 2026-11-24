@@ -41,6 +41,26 @@ export function zones(restingHR: number, maxHR: number): HrZoneSet {
   };
 }
 
+/**
+ * ACSM intensity bands on heart-rate reserve (Garber 2011): moderate is 40–59 % HRR, vigorous 60 % HRR and above.
+ * Two zones: [0] moderate, [1] vigorous (open-ended). Healthspan's activity terms count these, not the display zones.
+ */
+export const intensityEdges = { moderate: 0.4, vigorous: 0.6 } as const;
+
+export function intensityZones(restingHR: number, maxHR: number): HrZoneSet {
+  const reserve = Math.max(1, maxHR - restingHR);
+  const moderate = restingHR + intensityEdges.moderate * reserve;
+  const vigorous = restingHR + intensityEdges.vigorous * reserve;
+  return {
+    zones: [
+      { number: 1, lower: moderate, upper: vigorous },
+      { number: 2, lower: vigorous, upper: Math.max(maxHR, vigorous) },
+    ],
+    maxHR,
+    restingHR,
+  };
+}
+
 /** Zone 1..5 for a bpm, or 0 below zone 1. The top zone is open-ended. */
 export function zoneNumber(set: HrZoneSet, bpm: number): number {
   for (let i = set.zones.length - 1; i >= 0; i--) if (bpm >= set.zones[i].lower) return set.zones[i].number;

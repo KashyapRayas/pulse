@@ -58,7 +58,7 @@ export function SelectActivity({ recent, onSelect }: { recent: ActivityKind[]; o
           <ToggleGroupItem
             key={c.key}
             value={c.key}
-            className="relative h-11 rounded-none! bg-transparent! px-2.5 text-xs leading-4 font-bold tracking-[0.1em] text-muted-foreground uppercase after:absolute after:inset-x-2.5 after:bottom-1.5 after:h-0.5 after:rounded-full after:bg-foreground after:opacity-0 after:transition-opacity data-[state=on]:text-foreground data-[state=on]:after:opacity-100"
+            className="relative h-11 rounded-none! bg-transparent! px-2.5 text-xs leading-4 font-medium tracking-normal text-muted-foreground after:absolute after:inset-x-2.5 after:bottom-1.5 after:h-0.5 after:rounded-full after:bg-foreground after:opacity-0 after:transition-opacity data-[state=on]:text-foreground data-[state=on]:after:opacity-100"
           >
             {c.label}
           </ToggleGroupItem>
@@ -80,7 +80,7 @@ export function SelectActivity({ recent, onSelect }: { recent: ActivityKind[]; o
                       <button
                         type="button"
                         onClick={() => onSelect(key)}
-                        className="flex h-14 w-full items-center gap-4 rounded-xl bg-foreground/[0.07] px-4 text-left text-[13px] leading-4 font-bold tracking-[0.1em] uppercase outline-none transition-[background-color,scale] duration-150 ease-standard hover:bg-foreground/10 focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98]"
+                        className="flex h-14 w-full items-center gap-4 rounded-xl bg-foreground/[0.07] px-4 text-left text-[13px] leading-4 font-medium tracking-normal outline-none transition-[background-color,scale] duration-150 ease-standard hover:bg-foreground/10 focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98]"
                       >
                         <Icon aria-hidden strokeWidth={1.75} className="size-6 text-muted-foreground" />
                         {a.label}
@@ -158,7 +158,7 @@ function AddActivitySheet({ open, onOpenChange, recent, onSave }: { open: boolea
           <button
             type="button"
             onClick={() => setPicking(true)}
-            className="flex h-16 w-full items-center gap-4 rounded-xl bg-foreground/[0.07] px-4 text-left text-[13px] leading-4 font-bold tracking-[0.1em] uppercase outline-none hover:bg-foreground/10 focus-visible:ring-3 focus-visible:ring-ring/50"
+            className="flex h-16 w-full items-center gap-4 rounded-xl bg-foreground/[0.07] px-4 text-left text-[13px] leading-4 font-medium tracking-normal outline-none hover:bg-foreground/10 focus-visible:ring-3 focus-visible:ring-ring/50"
           >
             <Icon aria-hidden strokeWidth={1.75} className="size-7 text-muted-foreground" />
             <span className="flex-1">{a?.label ?? "Select activity"}</span>
@@ -245,7 +245,7 @@ function StartActivitySheet({
                 type="button"
                 aria-expanded={picking}
                 onClick={() => setPicking((p) => !p)}
-                className="flex h-11 flex-1 items-center gap-3 rounded-lg px-2 text-[15px] leading-5 font-bold tracking-[0.1em] uppercase outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                className="flex h-11 flex-1 items-center gap-3 rounded-lg px-2 text-[15px] leading-5 font-medium tracking-normal outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
               >
                 <Icon aria-hidden strokeWidth={1.75} className="size-6" />
                 <span className="flex-1 text-left">{a.label}</span>
@@ -266,7 +266,7 @@ function StartActivitySheet({
           ) : (
             <>
               <div className="flex justify-end px-4 pt-3">
-                <Label className="gap-3 text-xs leading-4 font-bold tracking-[0.1em] uppercase">
+                <Label className="gap-3 text-xs leading-4 font-medium tracking-normal">
                   Track route
                   <Switch checked={route} onCheckedChange={setRoute} />
                 </Label>
@@ -279,12 +279,12 @@ function StartActivitySheet({
                   </div>
                 </div>
               </div>
-              <div className="rounded-t-[28px] bg-sheet px-4 pt-4 pb-[max(env(safe-area-inset-bottom),16px)] shadow-sheet">
+              <div className="rounded-t-[16px] bg-sheet px-4 pt-4 pb-[max(env(safe-area-inset-bottom),16px)] shadow-sheet">
                 <div className="flex min-h-14 items-center gap-4">
                   <span className="font-numeric text-xl leading-7 font-bold tabular-nums">
                     {strainTarget ? `${formatValue("decimal1", strainTarget[0])}–${formatValue("decimal1", strainTarget[1])}` : MISSING}
                   </span>
-                  <Label htmlFor="start-target" className="flex-1 text-xs leading-4 font-bold tracking-[0.1em] uppercase">
+                  <Label htmlFor="start-target" className="flex-1 text-xs leading-4 font-medium tracking-normal">
                     Strain target
                   </Label>
                   <Switch id="start-target" checked={target} onCheckedChange={setTarget} disabled={!strainTarget} />

@@ -247,6 +247,24 @@ export const TREND_VIEW = {
       "A little time here each week raises your fitness ceiling; too much without rest adds strain faster than you recover.",
     ] },
   },
+  mvpa: {
+    group: "strain", label: "Moderate or Harder Activity", card: "Moderate+ Activity", short: "moderate-or-harder activity", format: "duration", direction: "up", colorBy: "single", chart: "bars", agg: "weekly",
+    pick: (r) => (worn(r) ? (r.s1?.intensityMin?.moderatePlus ?? null) : null), partialToday: true,
+    footnote: "Counted from your heart rate through the day, at 40% of your heart-rate reserve or more.",
+    about: { title: "What is moderate or harder activity?", body: [
+      "Minutes with your heart rate at 40% of its reserve or more, the ACSM's line for moderate intensity. Vigorous minutes count here too.",
+      "WHO advises at least 150 minutes a week. Pulse Age uses this total.",
+    ] },
+  },
+  vigorous: {
+    group: "strain", label: "Vigorous Activity", card: "Vigorous Activity", short: "vigorous activity", format: "duration", direction: "up", colorBy: "single", chart: "bars", agg: "weekly",
+    pick: (r) => (worn(r) ? (r.s1?.intensityMin?.vigorous ?? null) : null), partialToday: true,
+    footnote: "Counted from your heart rate through the day, at 60% of your heart-rate reserve or more.",
+    about: { title: "What is vigorous activity?", body: [
+      "Minutes with your heart rate at 60% of its reserve or more, the ACSM's line for vigorous intensity: running, hard rides, intervals.",
+      "It adds benefit on top of moderate activity, levelling off around 150 minutes a week.",
+    ] },
+  },
   strength: {
     group: "strain", label: "Strength Activity Time", short: "strength activity time", format: "duration", direction: "up", colorBy: "single", chart: "bars", agg: "weekly",
     pick: (r, x) => (worn(r) || x.strength.has(r.day) ? (x.strength.get(r.day)?.min ?? 0) : null), partBreakdown: "strength", partialToday: true,

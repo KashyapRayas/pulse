@@ -53,7 +53,7 @@ export function CoachGlance({ id, question }: { id: string; question: string }) 
       <Link
         href={`/coach?q=${encodeURIComponent(question)}`}
         aria-label={s.text ? `Coach: ${s.text} Ask the coach about this workout.` : "Coach is analyzing this workout. Ask the coach about it."}
-        className={cn(GLASS, "flex min-h-14 items-center gap-3 rounded-[28px] py-2 pr-3 pl-2 outline-none transition-[scale] duration-150 ease-standard focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98]")}
+        className={cn(GLASS, "flex min-h-14 items-center gap-3 rounded-[14px] py-2 pr-3 pl-2 outline-none transition-[scale] duration-150 ease-standard focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98]")}
       >
         <CoachGlyph />
         <span aria-hidden className={cn("min-w-0 flex-1 text-[15px] leading-5 font-medium", s.text ? "line-clamp-2 text-pretty" : "animate-pulse text-foreground-secondary motion-reduce:animate-none")}>

@@ -72,7 +72,7 @@ export function ProviderForm({ providers, current, onSaved }: { providers: Provi
   return (
     <form onSubmit={submit} className="space-y-5">
       <div className="space-y-2">
-        <p id="provider-label" className="px-1 text-xs leading-4 font-bold tracking-[0.08em] text-foreground-secondary uppercase">
+        <p id="provider-label" className="px-1 text-xs leading-4 font-medium tracking-normal text-foreground-secondary">
           Provider
         </p>
         <ToggleGroup type="single" value={id} onValueChange={pick} spacing={0} aria-labelledby="provider-label" className="flex flex-wrap gap-1.5">

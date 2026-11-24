@@ -52,7 +52,7 @@ export default function Loading() {
         </div>
         <div className="flex flex-col gap-8">
         <SectionShell variant="section" title="Insights"
-          action={<span className="text-xs leading-4 font-bold tracking-[0.1em] text-foreground-secondary uppercase">See all</span>}>
+          action={<span className="text-xs leading-4 font-medium tracking-normal text-foreground-secondary">See all</span>}>
           <InsightCardSkeleton action />
         </SectionShell>
         <SectionShell variant="section" title="This week">

@@ -8,6 +8,8 @@ export const sleepPlannerConfig = {
   hoursPerStrainPoint: 0.05,
   /** Share of the current debt to repay tonight (*tunable*). */
   debtRepayShare: 0.2,
+  /** Most extra minutes asked for in one night to repay debt, so the plan stays achievable (*tunable*). */
+  maxDebtRepayMin: 60,
   /** Nights behind the typical wake time and efficiency (spec). */
   windowNights: 14,
   /** Efficiency when no night has one (*tunable*). */
@@ -81,7 +83,7 @@ export function sleepPlan(input: SleepPlannerInput): SleepPlan {
   const parts = {
     baselineMin: input.baselineNeedHours * 60,
     strainMin: strainAbove * c.hoursPerStrainPoint * 60,
-    debtMin: Math.max(0, input.debtMin) * c.debtRepayShare,
+    debtMin: Math.min(c.maxDebtRepayMin, Math.max(0, input.debtMin) * c.debtRepayShare),
     napMin: Math.max(0, input.napMin),
   };
   const needMin = Math.max(0, parts.baselineMin + parts.strainMin + parts.debtMin - parts.napMin);

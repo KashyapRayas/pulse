@@ -25,7 +25,7 @@ export function DoneScreen({ title, body, onDone }: { title: string; body: strin
         <Check aria-hidden strokeWidth={2.5} className="size-12 text-optimal-text" />
       </span>
       <div className="space-y-2 animate-in fade-in-0 slide-in-from-bottom-1 fill-mode-both delay-100 duration-300 ease-out-expo motion-reduce:slide-in-from-bottom-0">
-        <p className="text-xl leading-7 font-bold tracking-[0.1em] uppercase">{title}</p>
+        <p className="text-xl leading-7 font-semibold tracking-[-0.01em]">{title}</p>
         <p className="text-[15px] leading-[22px] text-pretty text-muted-foreground">{body}</p>
       </div>
     </div>

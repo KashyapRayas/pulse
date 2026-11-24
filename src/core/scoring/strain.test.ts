@@ -4,6 +4,7 @@ import {
   banisterBMen,
   banisterBWomen,
   banisterDailyCeiling,
+  defaultMaxHR,
   edwardsTRIMP,
   effectiveEffort,
   effortFromStrainScale,
@@ -18,6 +19,7 @@ import {
   strain,
   strainDenominator,
   toStrainScale,
+  trimpFromEffort,
   trimpToStrain,
   strainScaleMax,
   zoneMinutes,
@@ -120,9 +122,9 @@ describe("StrainSampleDurationTest", () => {
 describe("StrainBanisterDenominatorTest", () => {
   const b = (sex: string) => (sex === "female" ? banisterBWomen : banisterBMen);
 
-  it("the daily ceiling is 24 h at full reserve", () => {
+  it("the daily ceiling is 24 h at full reserve, with Morton 1990's k: 0.64 for men, 0.86 for women", () => {
     expect(banisterDailyCeiling(banisterBMen)).toBeCloseTo(1440 * 0.64 * Math.exp(1.92), EPS);
-    expect(banisterDailyCeiling(banisterBWomen)).toBeCloseTo(1440 * 0.64 * Math.exp(1.67), EPS);
+    expect(banisterDailyCeiling(banisterBWomen)).toBeCloseTo(1440 * 0.86 * Math.exp(1.67), EPS);
   });
 
   it("the denominator is ceiling minus a sedentary day plus one, and a maximum day is 100 either way", () => {
@@ -134,9 +136,9 @@ describe("StrainBanisterDenominatorTest", () => {
     }
   });
 
-  it("the female denominator is smaller, for any spelling", () => {
+  it("the female denominator is larger (0.86·e^1.67 > 0.64·e^1.92), for any spelling", () => {
     const female = logMapDenominator("banister", "female");
-    expect(female).toBeLessThan(logMapDenominator("banister", "male"));
+    expect(female).toBeGreaterThan(logMapDenominator("banister", "male"));
     for (const s of ["f", "F", "Female", "female"]) expect(logMapDenominator("banister", s)).toBe(female);
   });
 
@@ -242,5 +244,20 @@ describe("plan scenarios and helpers", () => {
     expect(estimateHRmax(hist, null).source).toBe("observed");
     expect(estimateHRmax([150], 40)).toEqual({ hrmax: 180, source: "tanaka" });
     expect(estimateHRmax([150], null)).toEqual({ hrmax: 0, source: "unknown" });
+  });
+});
+
+describe("trimpFromEffort and the default HRmax", () => {
+  it("inverts the log map, so load ratios run on linear TRIMP", () => {
+    for (const t of [9, 50, 118, 236, 7200]) expect(trimpFromEffort(trimpToStrain(t))).toBeCloseTo(t, -Math.log10(t * 2e-3));
+    expect(trimpFromEffort(0)).toBe(0);
+    expect(trimpFromEffort(null)).toBe(0);
+    // A doubled load is a ratio of 2 in TRIMP, but only about 1.14 in Effort.
+    expect(trimpToStrain(236) / trimpToStrain(118)).toBeLessThan(1.15);
+  });
+
+  it("defaults to Tanaka (208 − 0.7 × age), not 220 − age", () => {
+    expect(defaultMaxHR(30)).toBeCloseTo(187, 10);
+    expect(defaultMaxHR(60)).toBeCloseTo(166, 10);
   });
 });

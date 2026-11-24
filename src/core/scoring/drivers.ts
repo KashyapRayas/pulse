@@ -2,7 +2,7 @@
 // the score minus the score with that term held at its baseline (z = 0): a marginal effect, so the rows
 // are not additive far from baseline.
 import { isUsable } from "./baselines";
-import { parasympatheticSaturation, recoveryFromStates, sleepPerfCenter, zScore } from "./recovery";
+import { hrvZ, parasympatheticSaturation, recoveryFromStates, sleepPerfCenter, zScore } from "./recovery";
 import type { BaselineState } from "./types";
 
 export type ChargeDriverLabel =
@@ -49,6 +49,7 @@ export interface ChargeDriverArgs {
   hrv: number;
   rhr: number | null;
   resp?: number | null;
+  /** ln(ms) domain, as Recovery scores it; rows show its geometric mean in ms. */
   hrvBaseline: BaselineState;
   rhrBaseline?: BaselineState | null;
   respBaseline?: BaselineState | null;
@@ -71,20 +72,21 @@ export function chargeDrivers(a: ChargeDriverArgs): ChargeDriver[] {
     return n === 0 ? 0 : n; // no -0: Kotlin Int has none
   };
 
-  const hrvZFull = zScore(a.hrv, a.hrvBaseline.baseline, a.hrvBaseline.spread);
+  const hrvZFull = hrvZ(a.hrv, { mean: a.hrvBaseline.baseline, spread: a.hrvBaseline.spread });
+  const hrvBaselineMs = Math.exp(a.hrvBaseline.baseline);
   const rhrZFull = rhrB && a.rhr != null ? zScore(rhrB.baseline, a.rhr, rhrB.spread) : null;
   const saturationDetected = parasympatheticSaturation(hrvZFull, rhrZFull).active;
 
   const drivers: ChargeDriver[] = [];
 
-  const hrvPoints = points(recoveryFromStates({ ...args, hrv: a.hrvBaseline.baseline }));
+  const hrvPoints = points(recoveryFromStates({ ...args, hrv: hrvBaselineMs }));
   drivers.push({
     label: "HEART_RATE_VARIABILITY",
     deltaPoints: hrvPoints,
     value: a.hrv,
-    baseline: a.hrvBaseline.baseline,
+    baseline: hrvBaselineMs,
     unit: "MILLISECONDS",
-    verdict: hrvVerdict(a.hrv, a.hrvBaseline.baseline, hrvPoints, saturationDetected),
+    verdict: hrvVerdict(a.hrv, hrvBaselineMs, hrvPoints, saturationDetected),
   });
 
   if (rhrB && a.rhr != null) {

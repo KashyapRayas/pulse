@@ -24,7 +24,7 @@ export const HEADER_FILL = "bg-(image:--page-ground) bg-no-repeat [background-si
 export const HEADER_FADE = "pb-6 mask-b-from-[calc(100%-24px)]"
 /** Detail header title, date pill label and tab-root title roles (spec §3.4). */
 // 12 px: the reference app's bar titles measure an 8-9 pt cap height across eight captures (spec §11 F13).
-export const HEADER_TITLE = "text-xs leading-5 font-bold tracking-[0.1em] uppercase"
+export const HEADER_TITLE = "text-xs leading-5 font-medium tracking-normal"
 
 type SyncView = { dot: string; label: string; line: string }
 
@@ -135,7 +135,7 @@ export function DemoChip() {
         <Badge
           variant="outline"
           tabIndex={0}
-          className="h-6 gap-1 rounded-full border-border px-2.5 text-[11px] font-bold tracking-[0.1em] text-foreground-secondary uppercase outline-none hover:bg-foreground/8 hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50"
+          className="h-6 gap-1 rounded-full border-border px-2.5 text-[11px] font-medium tracking-normal text-foreground-secondary outline-none hover:bg-foreground/8 hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50"
         >
           <FlaskConical aria-hidden strokeWidth={1.75} className="size-3!" />
           Demo data

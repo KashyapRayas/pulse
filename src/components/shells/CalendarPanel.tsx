@@ -134,7 +134,7 @@ function MonthPanel({
       <div className="grid h-14 grid-cols-[44px_1fr_44px] items-center">
         <ChevronButton dir="prev" disabled={!nav.prev} onClick={() => showMonth(-1)} />
         {/* 12 px like every bar title; the reference app's "MAY" has a 9 pt cap height [calendar-recovery-current-2026-05] (spec §11 F19). */}
-        <DialogPrimitive.Title className="text-center text-xs leading-4 font-bold tracking-[0.1em] uppercase">
+        <DialogPrimitive.Title className="text-center text-xs leading-4 font-medium tracking-normal">
           {monthLabel(month, today)}
         </DialogPrimitive.Title>
         <ChevronButton dir="next" disabled={!nav.next} onClick={() => showMonth(1)} />
@@ -147,7 +147,7 @@ function MonthPanel({
               key={w.short}
               role="columnheader"
               aria-label={w.long}
-              className="text-center text-xs leading-4 font-semibold tracking-[0.04em] text-muted-foreground uppercase"
+              className="text-center text-xs leading-4 font-medium tracking-normal text-muted-foreground"
             >
               {w.short}
             </span>
@@ -186,7 +186,7 @@ function MonthPanel({
             type="button"
             aria-label="Back to today"
             onClick={() => onSelect(today)}
-            className="relative h-8 touch-manipulation rounded-full bg-foreground/[0.08] px-3.5 text-[11px] leading-4 font-bold tracking-[0.1em] uppercase transition-[background-color,scale] duration-150 ease-standard outline-none after:absolute after:inset-x-0 after:-inset-y-1.5 hover:bg-foreground/[0.12] focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.96]"
+            className="relative h-8 touch-manipulation rounded-full bg-foreground/[0.08] px-3.5 text-[11px] leading-4 font-medium tracking-normal transition-[background-color,scale] duration-150 ease-standard outline-none after:absolute after:inset-x-0 after:-inset-y-1.5 hover:bg-foreground/[0.12] focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.96]"
           >
             Today
           </button>

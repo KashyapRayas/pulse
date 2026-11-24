@@ -13,6 +13,7 @@ import { parseDay, tabForPath, TAB_ROOT, type Tab } from "@/lib/url"
 import { SheetTrigger } from "./SheetTrigger"
 import { useTabNavigate } from "./AppNavigation"
 import { useShellCalendar, useShellStatus } from "./ShellStatus"
+import { CommandMenuButton } from "./CommandMenu"
 import { DemoChip } from "./TopBar"
 
 /** The reference app's Home glyph: a house outline framing a rising line chart (home-today-overview-top). Lucide's house, door swapped for a chart. */
@@ -35,12 +36,14 @@ const ROOTS = new Set(Object.values(TAB_ROOT))
  * 12 px blur, lit top edge, faint rim, soft lower shadow. Opaque under reduced transparency.
  */
 export const GLASS = "bg-linear-to-b from-glass-top to-glass-bottom backdrop-blur-md backdrop-saturate-150 shadow-glass ring-1 ring-glass-rim"
-const PRESS = "transition-[color,scale] duration-150 ease-standard outline-none active:scale-[0.96] focus-visible:ring-3 focus-visible:ring-ring/50"
-const ITEM_TONE = (active: boolean) => (active ? "text-foreground" : "text-muted-foreground hover:text-foreground-secondary")
+const PRESS = "transition-[color,background-color,scale] duration-150 ease-standard outline-none active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-ring"
+const ITEM_TONE = (active: boolean) => (active ? "text-foreground" : "text-muted-foreground hover:bg-foreground/[0.04] hover:text-foreground")
+/** Sidebar rows read brighter at rest, as Linear's do: secondary text, full white when active. */
+const ROW_TONE = (active: boolean) => (active ? "text-foreground" : "text-foreground-secondary hover:bg-foreground/[0.04] hover:text-foreground")
 
 /**
- * The active item's lens: one element that slides between items (150 ms), a soft pool of light that
- * is brightest at the item's lower edge, as sampled under the reference app's active tab [latest-tabbar-1].
+ * The active item's highlight: one element that slides between items (150 ms), a flat tint as Linear marks the
+ * current view.
  */
 function Lens({ index, axis, className }: { index: number; axis: "x" | "y"; className: string }) {
   return (
@@ -48,8 +51,8 @@ function Lens({ index, axis, className }: { index: number; axis: "x" | "y"; clas
       aria-hidden
       style={{ "--tab": index } as React.CSSProperties}
       className={cn(
-        "pointer-events-none absolute bg-radial-[ellipse_at_50%_115%] from-foreground/16 via-foreground/5 via-55% to-foreground/[0.02] transition-[translate,opacity] duration-150 ease-standard motion-reduce:transition-none",
-        axis === "x" ? "translate-x-[calc(var(--tab)*100%)]" : "translate-y-[calc(var(--tab)*(100%+4px))]",
+        "pointer-events-none absolute bg-foreground/[0.07] transition-[translate,opacity] duration-150 ease-standard motion-reduce:transition-none",
+        axis === "x" ? "translate-x-[calc(var(--tab)*100%)]" : "translate-y-[calc(var(--tab)*(100%+2px))]",
         index < 0 && "opacity-0",
         className
       )}
@@ -57,12 +60,12 @@ function Lens({ index, axis, className }: { index: number; axis: "x" | "y"; clas
   )
 }
 
-/** Phone tab bar: a 62 px glass squircle with four destinations (spec §4.2, G1). */
+/** Phone tab bar: a 62 px floating panel with four destinations (spec §4.2, G1), on Linear's flat surface and hairline. */
 function TabBar({ current }: { current: number }) {
   const go = useTabNavigate()
   return (
-    <nav aria-label="Primary" onClick={() => haptic(6)} className={cn(GLASS, "relative h-[62px] min-w-0 flex-1 rounded-[22px] p-1")}>
-      <Lens index={current} axis="x" className="inset-y-1 left-1 w-[calc((100%-8px)/4)] rounded-[18px]" />
+    <nav aria-label="Primary" onClick={() => haptic(6)} className={cn(GLASS, "relative h-[62px] min-w-0 flex-1 rounded-3xl p-1")}>
+      <Lens index={current} axis="x" className="inset-y-1 left-1 w-[calc((100%-8px)/4)] rounded-2xl" />
       <ul className="relative grid h-full grid-cols-4">
         {TABS.map(({ tab, label, icon: Icon }, i) => (
           <li key={tab} className="min-w-0">
@@ -71,10 +74,10 @@ function TabBar({ current }: { current: number }) {
               onClick={(e) => go(TAB_ROOT[tab], e)}
               prefetch // full prefetch: the tabs open from the client cache, no skeleton flash
               aria-current={i === current ? "page" : undefined}
-              className={cn(PRESS, ITEM_TONE(i === current), "flex h-full flex-col items-center justify-center gap-0.5 rounded-[18px] focus-visible:ring-inset")}
+              className={cn(PRESS, ITEM_TONE(i === current), "flex h-full flex-col items-center justify-center gap-1 rounded-2xl hover:bg-transparent focus-visible:ring-inset")}
             >
-              <Icon aria-hidden strokeWidth={1.6} className="size-[26px]" />
-              <span className="text-[11px] leading-[13px] font-semibold">{label}</span>
+              <Icon aria-hidden strokeWidth={1.75} className="size-[22px]" />
+              <span className="text-[11px] leading-[13px] font-medium">{label}</span>
             </Link>
           </li>
         ))}
@@ -83,22 +86,23 @@ function TabBar({ current }: { current: number }) {
   )
 }
 
-/** Tablet rail, 88 px, floating (inferred, I2): the tab bar turned on its side. */
+/** Tablet rail, 96 px, flush to the left edge on the navigation colour with a hairline, Linear's collapsed sidebar. */
 function Rail({ current, wide, pathname }: { current: number; wide: boolean; pathname: string }) {
   const go = useTabNavigate()
   return (
-    <nav aria-label="Primary" className={cn(GLASS, "fixed top-[calc(var(--inset-top)+12px)] bottom-3 left-3 z-30 hidden w-[88px] flex-col items-center rounded-[28px] py-4 md:flex", !wide && "xl:hidden")}>
+    <nav aria-label="Primary" className={cn("fixed inset-y-0 left-0 z-30 hidden w-[96px] flex-col items-center border-r border-border bg-sidebar pt-[calc(var(--inset-top)+12px)] pb-3 md:flex", !wide && "xl:hidden")}>
       <Link
         href="/"
         aria-label="Pulse home"
-        className="mb-5 grid size-10 place-items-center rounded-full transition-[background-color,scale] duration-150 ease-standard outline-none hover:bg-foreground/8 focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.96]"
+        className="mb-4 grid size-10 place-items-center rounded-lg transition-[background-color,scale] duration-150 ease-standard outline-none hover:bg-foreground/[0.06] focus-visible:ring-2 focus-visible:ring-ring active:scale-[0.98]"
       >
         <span aria-hidden>
           <Mark className="size-6" />
         </span>
       </Link>
-      <ul className="relative flex flex-col gap-1">
-        <Lens index={current} axis="y" className="inset-x-0 top-0 h-16 rounded-[20px]" />
+      <CommandMenuButton compact />
+      <ul className="relative flex flex-col gap-0.5">
+        <Lens index={current} axis="y" className="inset-x-0 top-0 h-14 rounded-lg" />
         {TABS.map(({ tab, label, icon: Icon }, i) => (
           <li key={tab} className="relative">
             <Link
@@ -106,10 +110,10 @@ function Rail({ current, wide, pathname }: { current: number; wide: boolean; pat
               onClick={(e) => go(TAB_ROOT[tab], e)}
               prefetch // full prefetch: the tabs open from the client cache, no skeleton flash
               aria-current={i === current ? "page" : undefined}
-              className={cn(PRESS, ITEM_TONE(i === current), "flex h-16 w-[72px] flex-col items-center justify-center gap-1 rounded-[20px]")}
+              className={cn(PRESS, ITEM_TONE(i === current), "flex h-14 w-[76px] flex-col items-center justify-center gap-1 rounded-lg")}
             >
-              <Icon aria-hidden strokeWidth={1.6} className="size-[26px]" />
-              <span className="text-xs leading-4 font-semibold">{label}</span>
+              <Icon aria-hidden strokeWidth={1.75} className="size-5" />
+              <span className="text-[11px] leading-4 font-medium">{label}</span>
             </Link>
           </li>
         ))}
@@ -117,16 +121,16 @@ function Rail({ current, wide, pathname }: { current: number; wide: boolean; pat
       {/* The full sidebar carries Settings; where the rail stands alone (the coach, Settings) it keeps its own. */}
       {wide && (
         <>
-          <div aria-hidden className="my-2 h-px w-12 bg-foreground/8" />
+          <div aria-hidden className="my-2 h-px w-12 bg-border" />
           <Link
             href="/settings"
             onClick={(e) => go("/settings", e)}
             prefetch
             aria-current={pathname.startsWith("/settings") ? "page" : undefined}
-            className={cn(PRESS, ITEM_TONE(pathname.startsWith("/settings")), "flex h-16 w-[72px] flex-col items-center justify-center gap-1 rounded-[20px]", pathname.startsWith("/settings") && "bg-glass-lens")}
+            className={cn(PRESS, ITEM_TONE(pathname.startsWith("/settings")), "flex h-14 w-[76px] flex-col items-center justify-center gap-1 rounded-lg", pathname.startsWith("/settings") && "bg-foreground/[0.07]")}
           >
-            <Settings aria-hidden strokeWidth={1.6} className="size-[26px]" />
-            <span className="text-xs leading-4 font-semibold">Settings</span>
+            <Settings aria-hidden strokeWidth={1.75} className="size-5" />
+            <span className="text-[11px] leading-4 font-medium">Settings</span>
           </Link>
         </>
       )}
@@ -139,7 +143,7 @@ function Rail({ current, wide, pathname }: { current: number; wide: boolean; pat
   )
 }
 
-/** Laptop sidebar, 232 px, floating (inferred, I2), with Settings under a hairline. */
+/** Laptop sidebar, 244 px, flush to the left edge on the navigation colour (Linear's sidebar), Settings under a hairline. */
 function Sidebar({ current, pathname }: { current: number; pathname: string }) {
   // Reports, Trends and the rest live in More (U21), so each destination is listed once.
   const extra = [{ href: "/settings", match: "/settings", label: "Settings", icon: Settings }]
@@ -153,36 +157,37 @@ function Sidebar({ current, pathname }: { current: number; pathname: string }) {
         onClick={(e) => go(href, e)}
         prefetch
         aria-current={active ? "page" : undefined}
-        className={cn(PRESS, ITEM_TONE(active), "flex h-12 items-center gap-3 rounded-full px-4 text-[15px] leading-5 font-semibold", lit && "bg-glass-lens")}
+        className={cn(PRESS, ROW_TONE(active), "flex h-8 items-center gap-2.5 rounded-md px-2 text-[13px] leading-5 font-medium", lit && "bg-foreground/[0.07]")}
       >
-        <Icon aria-hidden strokeWidth={1.6} className="size-6 shrink-0" />
+        <Icon aria-hidden strokeWidth={1.75} className="size-4 shrink-0" />
         {label}
       </Link>
     </li>
   )
   return (
-    <nav aria-label="Primary" className={cn(GLASS, "fixed top-[calc(var(--inset-top)+12px)] bottom-3 left-3 z-30 hidden w-[232px] flex-col rounded-[28px] p-3 xl:flex")}>
+    <nav aria-label="Primary" className="fixed inset-y-0 left-0 z-30 hidden w-[244px] flex-col border-r border-border bg-sidebar px-3 pt-[calc(var(--inset-top)+12px)] pb-3 xl:flex">
       <Link
         href="/"
         aria-label="Pulse home"
-        className="flex h-14 items-center rounded-full px-3 transition-[color] duration-150 ease-standard outline-none hover:text-foreground-secondary focus-visible:ring-3 focus-visible:ring-ring/50"
+        className="mb-3 flex h-10 items-center rounded-md px-2 transition-[background-color] duration-150 ease-standard outline-none hover:bg-foreground/[0.04] focus-visible:ring-2 focus-visible:ring-ring"
       >
-        <span aria-hidden className="flex items-center gap-2.5">
-          <Mark className="size-7" />
-          <Wordmark className="h-[17px]" />
+        <span aria-hidden className="flex items-center gap-2">
+          <Mark className="size-5" />
+          <Wordmark className="h-[13px]" />
         </span>
       </Link>
-      <ul className="relative flex flex-col gap-1">
-        <Lens index={tab} axis="y" className="inset-x-0 top-0 h-12 rounded-full" />
+      <CommandMenuButton />
+      <ul className="relative flex flex-col gap-0.5">
+        <Lens index={tab} axis="y" className="inset-x-0 top-0 h-8 rounded-md" />
         {TABS.map((t, i) => item(TAB_ROOT[t.tab], t.label, t.icon, i === tab))}
       </ul>
-      <div aria-hidden className="mx-3 my-2 h-px bg-foreground/8" />
-      <ul className="flex flex-col gap-1">{extra.map((e) => item(e.href, e.label, e.icon, pathname.startsWith(e.match), pathname.startsWith(e.match)))}</ul>
-      <div className="mt-auto space-y-3">
+      <div aria-hidden className="mx-2 my-2 h-px bg-border" />
+      <ul className="flex flex-col gap-0.5">{extra.map((e) => item(e.href, e.label, e.icon, pathname.startsWith(e.match), pathname.startsWith(e.match)))}</ul>
+      <div className="mt-auto space-y-2">
         <React.Suspense>
           <CheckInAction variant="sidebar" />
         </React.Suspense>
-        <div className="px-3">
+        <div className="px-2">
           <DemoChip />
         </div>
       </div>
@@ -190,14 +195,17 @@ function Sidebar({ current, pathname }: { current: number; pathname: string }) {
   )
 }
 
-const ACTION_FACE = "bg-linear-to-b from-glass-action-top to-glass-action-bottom ring-1 ring-action-rim-from/25 transition-[scale,filter] duration-150 ease-standard outline-none hover:brightness-110 focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.96]"
+const ACTION_FACE = "bg-linear-to-b from-glass-action-top to-glass-action-bottom ring-1 ring-border transition-[scale,filter,background-color] duration-150 ease-standard outline-none hover:brightness-110 focus-visible:ring-2 focus-visible:ring-ring active:scale-[0.98]"
 
-/** the reference app's ringed monogram: "P" in a 30 px circle with the indigo-to-blue rim. */
-function Monogram() {
+/** The ringed monogram: "P" in a circle with the indigo-to-blue rim, the gradient Linear keeps for its AI. */
+function Monogram({ small = false }: { small?: boolean }) {
   return (
     <span
       aria-hidden
-      className="grid size-[30px] shrink-0 place-items-center rounded-full border-[1.5px] border-transparent font-numeric text-[15px] leading-none font-bold [background:linear-gradient(var(--action-face),var(--action-face))_padding-box,linear-gradient(135deg,var(--action-rim-from),var(--action-rim-to))_border-box]"
+      className={cn(
+        "grid shrink-0 place-items-center rounded-full border-[1.5px] border-transparent font-sans leading-none font-semibold [background:linear-gradient(var(--action-face),var(--action-face))_padding-box,linear-gradient(135deg,var(--action-rim-from),var(--action-rim-to))_border-box]",
+        small ? "size-6 text-[11px]" : "size-[30px] text-[14px]"
+      )}
     >
       P
     </span>
@@ -221,19 +229,19 @@ function CheckInAction({ variant }: { variant: "float" | "rail" | "sidebar" }) {
   if (coach) {
     const face =
       variant === "sidebar"
-        ? "flex h-12 items-center gap-3 rounded-full pr-4 pl-2.5 text-[15px] leading-5 font-semibold"
-        : cn("grid shrink-0 place-items-center", variant === "rail" ? "size-14 rounded-[20px]" : "size-[62px] rounded-[22px] shadow-glass backdrop-blur-md backdrop-saturate-150")
+        ? "flex h-9 items-center gap-2.5 rounded-md pr-3 pl-1.5 text-[13px] leading-5 font-medium"
+        : cn("grid shrink-0 place-items-center", variant === "rail" ? "size-14 rounded-lg" : "size-[62px] rounded-3xl shadow-glass backdrop-blur-md backdrop-saturate-150")
     return (
       <Link href="/coach" aria-label="Open Coach" className={cn(ACTION_FACE, face)}>
-        <Monogram />
+        <Monogram small={variant === "sidebar"} />
         {variant === "sidebar" && "Coach"}
       </Link>
     )
   }
   if (variant === "sidebar")
     return (
-      <SheetTrigger sheet="checkin" aria-label={label} className={cn(ACTION_FACE, "flex h-12 items-center gap-3 rounded-full pr-4 pl-2.5 text-[15px] leading-5 font-semibold")}>
-        <Monogram />
+      <SheetTrigger sheet="checkin" aria-label={label} className={cn(ACTION_FACE, "flex h-9 items-center gap-2.5 rounded-md pr-3 pl-1.5 text-[13px] leading-5 font-medium")}>
+        <Monogram small />
         Check in
       </SheetTrigger>
     )
@@ -244,7 +252,7 @@ function CheckInAction({ variant }: { variant: "float" | "rail" | "sidebar" }) {
       className={cn(
         ACTION_FACE,
         "grid shrink-0 place-items-center",
-        variant === "rail" ? "size-14 rounded-[20px]" : "size-[62px] rounded-[22px] shadow-glass backdrop-blur-md backdrop-saturate-150"
+        variant === "rail" ? "size-14 rounded-lg" : "size-[62px] rounded-3xl shadow-glass backdrop-blur-md backdrop-saturate-150"
       )}
     >
       <Monogram />

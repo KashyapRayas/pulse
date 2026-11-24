@@ -14,7 +14,7 @@ import type { SleepPlanVM } from "@/server/queries/types"
 // 32 px once the card is 288 px wide; narrower cards (the laptop half-column) step down to 26 and then 22 px so the
 // two times never overflow (U18 H-01: at 1280 px the 26 px times ran into the card edge).
 const TIME = "font-numeric text-[22px] leading-none font-bold tabular-nums @[15rem]:text-[26px] @[18rem]:text-[32px]"
-const LABEL = "text-xs leading-4 font-bold tracking-[0.1em] uppercase text-foreground-secondary"
+const LABEL = "text-xs leading-4 font-medium tracking-normal text-foreground-secondary"
 
 /** A smart alarm set in Pulse (`FEATURES.sleepAlarm`): its time and how it wakes you. */
 export type SleepAlarmVM = { at: number; mode: "exact" | "window" }
@@ -73,7 +73,7 @@ export function TonightPlan({ plan, timeZone, alarm }: { plan: SleepPlanVM; time
             key={p.key}
             value={p.key}
             aria-label={`${p.label}, ${Math.round(p.share * 100)} percent of need`}
-            className="h-10 rounded-md! px-2 text-[13px] font-bold tracking-[0.1em] text-muted-foreground uppercase transition-[background-color,color] duration-150 ease-standard hover:bg-transparent hover:text-foreground data-[state=on]:bg-secondary data-[state=on]:text-foreground"
+            className="h-10 rounded-md! px-2 text-[13px] font-medium tracking-normal text-muted-foreground transition-[background-color,color] duration-150 ease-standard hover:bg-transparent hover:text-foreground data-[state=on]:bg-secondary data-[state=on]:text-foreground"
           >
             {p.label}
           </ToggleGroupItem>

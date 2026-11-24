@@ -45,12 +45,12 @@ export function InfoDialogContent({ title, body, icon, chip, action }: InfoConte
         {icon && <div className="mb-4 text-foreground-secondary [&_svg]:size-7">{icon}</div>}
         <div className="mb-3 flex items-start gap-2.5 pr-8">
           {chip && <StatusChip tone={chip.tone}>{chip.text}</StatusChip>}
-          <DialogPrimitive.Title className="text-[15px] leading-5 font-bold tracking-[0.1em] text-balance uppercase">{title}</DialogPrimitive.Title>
+          <DialogPrimitive.Title className="text-[15px] leading-5 font-medium tracking-normal text-balance">{title}</DialogPrimitive.Title>
         </div>
         {/* the reference app's info copy is a light grey near #dcdfe6, brighter than the secondary tier [latest-popover-info-1] (spec §11 F22). */}
         <div className="space-y-4 text-[15px] leading-[22px] text-pretty text-foreground/85">{body}</div>
         {action && (
-          <Button asChild variant="outline-pill" className="mt-6 h-12 w-full text-[13px] font-bold tracking-[0.1em] uppercase">
+          <Button asChild variant="outline-pill" className="mt-6 h-12 w-full text-[13px] font-medium tracking-normal">
             <Link href={action.href}>{action.label}</Link>
           </Button>
         )}

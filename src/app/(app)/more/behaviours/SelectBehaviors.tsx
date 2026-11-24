@@ -72,7 +72,7 @@ export function BehaviorPicker({ tags, initial, selected, onChange }: { tags: Be
             <ToggleGroupItem
               key={t.key}
               value={t.key}
-              className="relative h-11 rounded-none! bg-transparent! px-2.5 text-xs leading-4 font-bold tracking-[0.1em] whitespace-nowrap text-muted-foreground uppercase after:absolute after:inset-x-2.5 after:bottom-1.5 after:h-0.5 after:rounded-full after:bg-foreground after:opacity-0 after:transition-opacity data-[state=on]:text-foreground data-[state=on]:after:opacity-100"
+              className="relative h-11 rounded-none! bg-transparent! px-2.5 text-xs leading-4 font-medium tracking-normal whitespace-nowrap text-muted-foreground after:absolute after:inset-x-2.5 after:bottom-1.5 after:h-0.5 after:rounded-full after:bg-foreground after:opacity-0 after:transition-opacity data-[state=on]:text-foreground data-[state=on]:after:opacity-100"
             >
               {t.label}
             </ToggleGroupItem>

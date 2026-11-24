@@ -1,6 +1,7 @@
 // Own algorithm (docs/algorithms/fitness-level.md): VO2max percentile for age decade and sex from the FRIEND
-// treadmill reference standards, a category from the percentile, and the 75th-percentile reference that
-// Healthspan scores VO2max against.
+// treadmill reference standards, a category from the percentile (Cooper Institute bands), and the median reference
+// that Healthspan scores VO2max against. The 2015 table is kept until the 2022 update's percentile table (Kaminsky
+// 2022, 1.5–4.6 mL/kg/min lower) can be transcribed from the paper itself.
 
 export type Sex = "male" | "female";
 
@@ -47,10 +48,13 @@ export const FRIEND_TREADMILL: Record<Sex, readonly (readonly number[])[]> = {
 };
 
 export const fitnessLevelConfig = {
-  /** Lowest percentile of each category (*tunable*); below `fair` is poor. */
-  categoryFloors: { fair: 20, good: 40, excellent: 60, superior: 80 },
-  /** Healthspan's VO2max reference (*tunable*); must be one of FRIEND_PERCENTILES. */
-  referencePercentile: 75,
+  /**
+   * Lowest percentile of each category; below `fair` is poor. The Cooper Institute's bands (as ACSM reprints them):
+   * Fair 40th, Good 60th, Excellent 80th, Superior 95th. Percentiles clamp at 95, so Superior is the top column.
+   */
+  categoryFloors: { fair: 40, good: 60, excellent: 80, superior: 95 },
+  /** Healthspan's VO2max reference: the age-and-sex median, as in fitness age (Nes 2014); one of FRIEND_PERCENTILES. */
+  referencePercentile: 50,
 };
 
 export type FitnessCategory = "poor" | "fair" | "good" | "excellent" | "superior";

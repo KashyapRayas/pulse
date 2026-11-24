@@ -24,9 +24,9 @@ export const MORE_COLUMN = "mx-auto flex w-full max-w-[640px] flex-col gap-6"
 export const LIST_GRID = "flex flex-col gap-6 xl:grid xl:grid-cols-2 xl:items-start xl:gap-x-6 xl:gap-y-8"
 
 /** the reference app's section label over a group of rows [latest-settings-1] (spec §11 F22): 13 px caps, tracking 0.1em. */
-export const GROUP_LABEL = "px-1 text-[13px] leading-4 font-bold tracking-[0.1em] text-foreground/85 uppercase"
+export const GROUP_LABEL = "px-1 text-[13px] leading-4 font-medium tracking-normal text-foreground/85"
 const ROW = "flex min-h-14 items-center gap-3 px-4 py-2"
-const ROW_LABEL = "text-xs leading-4 font-bold tracking-[0.1em] uppercase"
+const ROW_LABEL = "text-xs leading-4 font-medium tracking-normal"
 
 /**
  * the reference app's settings rows (spec §7.14 v2): a caps group label, then one 56 px card per row with an icon, a caps label

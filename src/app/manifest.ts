@@ -34,9 +34,9 @@ export default function manifest(): MetadataRoute.Manifest {
     // A second launch (a shortcut, a notification) reuses the open window instead of stacking another.
     launch_handler: { client_mode: "navigate-existing" },
     // The launch screen on Android is this colour with the "any" icon centred, so the two must match.
-    background_color: "#101518",
+    background_color: "#0f1011",
     // Matches viewport.themeColor (layout.tsx), the top of the page ground, so the installed app's bar never changes colour on load.
-    theme_color: "#1d2529",
+    theme_color: "#0f1011",
     icons: [
       // Mark only. "maskable" keeps it inside the 80% safe zone; Android 12+ draws both the home-screen icon and its launch screen from it.
       icon("icon-192", 192, "any"),

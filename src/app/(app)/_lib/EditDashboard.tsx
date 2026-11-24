@@ -20,7 +20,7 @@ export type EditDashboardProps = {
 
 /** dashboard-customize-reorder: each metric a card with its icon and caps name. */
 const CARD = "flex min-h-14 items-center gap-3 rounded-xl bg-foreground/[0.07] pl-4"
-const NAME = "min-w-0 flex-1 text-[13px] leading-4 font-bold tracking-[0.1em] text-balance uppercase"
+const NAME = "min-w-0 flex-1 text-[13px] leading-4 font-medium tracking-normal text-balance"
 const ICON = "grid size-5 shrink-0 place-items-center text-muted-foreground [&_svg]:size-5 [&_svg]:stroke-[1.75]"
 const GROUP_LABEL = Object.fromEntries(DASHBOARD_GROUPS.map((g) => [g.key, g.label])) as Record<string, string>
 const moveTo = <T,>(items: T[], from: number, to: number) => {
@@ -113,7 +113,7 @@ export function EditDashboard({ keys, empty = [] }: EditDashboardProps) {
         variant="ghost"
         aria-label="Customize My Dashboard"
         onClick={start}
-        className="relative -mr-2 h-8 gap-1.5 rounded-full px-2 text-xs leading-4 font-bold tracking-[0.1em] text-foreground uppercase after:absolute after:-inset-y-1.5 hover:bg-foreground/[0.06]"
+        className="relative -mr-2 h-8 gap-1.5 rounded-full px-2 text-xs leading-4 font-medium tracking-normal text-foreground after:absolute after:-inset-y-1.5 hover:bg-foreground/[0.06]"
       >
         Customize
         <Pencil aria-hidden strokeWidth={1.75} className="size-4" />

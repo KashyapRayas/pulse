@@ -11,14 +11,14 @@ const { chromium } = require("@playwright/test")
 
 const file = (p) => new URL(p, import.meta.url)
 const b64 = (p) => readFileSync(file(p)).toString("base64")
-const font = b64("../node_modules/@fontsource-variable/figtree/files/figtree-latin-wght-normal.woff2")
+const font = b64("../node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2")
 const phone = b64("../../docs/screenshots/phone-home.png")
 const wm = GLYPHS.bold
 
 const html = `<!doctype html><html><head><style>
-@font-face { font-family: Figtree; src: url(data:font/woff2;base64,${font}) format("woff2"); font-weight: 300 900; }
+@font-face { font-family: Inter; src: url(data:font/woff2;base64,${font}) format("woff2"); font-weight: 300 900; }
 * { box-sizing: border-box; margin: 0; }
-body { width: 1200px; height: 630px; overflow: hidden; font-family: Figtree; color: #fff; -webkit-font-smoothing: antialiased;
+body { width: 1200px; height: 630px; overflow: hidden; font-family: Inter; color: #fff; -webkit-font-smoothing: antialiased;
   background: radial-gradient(70% 90% at 85% 10%, #173330 0%, transparent 60%), linear-gradient(180deg, #262e33 0, #1b2024 300px, #0f1113 630px); }
 .copy { position: absolute; left: 72px; top: 72px; width: 640px; }
 .brand { display: flex; align-items: center; gap: 14px; }

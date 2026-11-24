@@ -2,7 +2,7 @@
   "appId": "io.github.adityaongit.pulse",
   "appName": "Pulse",
   "webDir": "www",
-  "backgroundColor": "#101518",
+  "backgroundColor": "#0f1011",
   "appendUserAgent": "PulseApp",
   "server": {
     "errorPath": "error.html"

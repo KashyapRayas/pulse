@@ -200,7 +200,7 @@ function Trend({ points, p }: { points: TrendPoint[]; p: TrendChartProps }) {
     <div className="min-w-0">
       <div className={headerClass(ranges)}>
         <div className="min-w-0" aria-live="polite">
-          <p className="text-xs leading-4 font-bold tracking-[0.1em] text-muted-foreground uppercase tabular-nums">
+          <p className="text-xs leading-4 font-medium tracking-normal text-muted-foreground tabular-nums">
             {scrubbed || byDay ? dayLabel(shown?.date ?? today, today) : "Average"}
           </p>
           <ValueUnit
@@ -428,7 +428,7 @@ export function TrendChartSkeleton({
           {day ? (
             <SkeletonText className="w-[6ch] text-xs leading-4" />
           ) : (
-            <p className="text-xs leading-4 font-bold tracking-[0.1em] text-muted-foreground uppercase">Average</p>
+            <p className="text-xs leading-4 font-medium tracking-normal text-muted-foreground">Average</p>
           )}
           <SkeletonText className="w-[4ch] font-numeric text-[28px] leading-8 font-bold" />
           {legend && <SkeletonText className="mt-1.5 w-40 text-xs leading-4" />}

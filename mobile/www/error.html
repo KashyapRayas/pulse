@@ -5,15 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Can’t reach Pulse</title>
 <style>
-  :root { color-scheme: dark light; --bg: #101518; --fg: #f6f8f9; --muted: #9aa7ad; --line: #2c373c; }
-  @media (prefers-color-scheme: light) { :root { --bg: #f6f8f9; --fg: #101518; --muted: #5d6a70; --line: #d5dcdf; } }
-  html, body { height: 100%; margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.4 system-ui, -apple-system, sans-serif; -webkit-text-size-adjust: 100%; }
+  :root { color-scheme: dark light; --bg: #0f1011; --fg: #f7f8f8; --muted: #8a8f98; --line: #26272b; --accent: #5e6ad2; }
+  @media (prefers-color-scheme: light) { :root { --bg: #fbfbfc; --fg: #1b1c1f; --muted: #6b6f76; --line: #e4e5e9; } }
+  html, body { height: 100%; margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.45 Inter, system-ui, -apple-system, sans-serif; -webkit-text-size-adjust: 100%; }
   main { box-sizing: border-box; min-height: 100%; display: grid; place-content: center; justify-items: center; gap: 12px; padding: max(24px, env(safe-area-inset-top)) 24px max(24px, env(safe-area-inset-bottom)); text-align: center; }
   svg { width: 56px; height: 56px; }
-  h1 { margin: 8px 0 0; font-size: 20px; }
+  h1 { margin: 8px 0 0; font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
   p { margin: 0; max-width: 34ch; color: var(--muted); }
   .actions { display: grid; gap: 10px; width: min(340px, calc(100vw - 48px)); margin-top: 12px; }
-  button { min-height: 48px; padding: 0 24px; border: 0; border-radius: 999px; background: #00f19f; color: #101518; font: inherit; font-weight: 600; }
+  button { min-height: 48px; padding: 0 24px; border: 0; border-radius: 8px; background: var(--accent); color: #ffffff; font: inherit; font-weight: 500; }
   button.quiet { background: transparent; color: var(--fg); border: 1px solid var(--line); }
 </style>
 </head>

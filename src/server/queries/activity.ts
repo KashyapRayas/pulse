@@ -82,7 +82,8 @@ export async function getActivity(id: string, ctx: QueryCtx): Promise<ActivityVM
   const hrr: ActivityVM["hrr"] =
     hrr60 == null
       ? none("insufficient_hr_data")
-      : ok(hrr60 >= 20 ? { value: hrr60, tone: "optimal", label: "Good" } : hrr60 >= 12 ? { value: hrr60, tone: "neutral", label: "Typical" } : { value: hrr60, tone: "warning", label: "Low" });
+      : // Cole 1999: a drop of 12 bpm or less in the first minute is abnormal.
+        ok(hrr60 >= 20 ? { value: hrr60, tone: "optimal", label: "Good" } : hrr60 > 12 ? { value: hrr60, tone: "neutral", label: "Typical" } : { value: hrr60, tone: "warning", label: "Low" });
 
   return {
     id,

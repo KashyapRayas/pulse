@@ -77,7 +77,8 @@ describe("getHealthspan factors", () => {
     expect(Object.fromEntries(vm.contributors.map((c) => [c.key, c.trendHref]))).toMatchObject({
       sleepHours: "/trend/hours",
       sri: "/trend/consistency",
-      zone13: "/trend/zones13",
+      mvpa: "/trend/mvpa",
+      vigorous: "/trend/vigorous",
       restingHr: "/trend/rhr",
       vo2max: "/trend/vo2max",
       leanMass: "/trend/lean_mass",

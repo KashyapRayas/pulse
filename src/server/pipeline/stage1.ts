@@ -9,7 +9,7 @@ import { hrRecovery } from "@/core/scoring/hrRecovery";
 import { sessionRestingHR } from "@/core/scoring/restingHr";
 import { defaultRestingHR, strain } from "@/core/scoring/strain";
 import type { BaselineState, HrSample } from "@/core/scoring/types";
-import { timeInZone, zones as hrZones } from "@/core/scoring/zones";
+import { intensityZones, timeInZone, zones as hrZones } from "@/core/scoring/zones";
 import { minuteLoad } from "@/core/algorithms/energyBank";
 import { minuteMeanHr, stress } from "@/core/algorithms/stress";
 import { BATCH_DAYS, type Data, type Exercise, r1, round, type Session, sha, touching, upsertSeries } from "./data";
@@ -134,6 +134,8 @@ function stage1Day(
   const tiz = (xs: HrSample[]) => timeInZone(xs, zoneSet);
 
   const dayTiz = tiz(dayHr);
+  // ACSM intensity minutes (moderate ≥ 40 % HRR, vigorous ≥ 60 % HRR) for Healthspan's activity terms.
+  const intensity = timeInZone(dayHr, intensityZones(restingHr, maxHr)).seconds;
   const means = minuteMeanHr(dayHr, start, end);
   const n = means.length;
   const steps = new Array<number>(n).fill(0);
@@ -160,6 +162,7 @@ function stage1Day(
     zoneLower: zoneSet.zones.map((z) => round(z.lower, 1)),
     zoneSeconds: dayTiz.seconds,
     zoneBelowSeconds: dayTiz.belowZone1,
+    intensityMin: { moderatePlus: round((intensity[0] + intensity[1]) / 60, 1), vigorous: round(intensity[1] / 60, 1) },
     dayAggregate: probe.dayAggregate,
     stillMinutes: still.filter((v) => v != null).length,
   };

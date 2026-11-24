@@ -8,16 +8,16 @@ import { TAG_COPY, type MetricTag } from "@/lib/reasons"
 // Small shared marks used by every kit component (spec §5.0). One look per meaning.
 
 /** Shared type styles: the uppercase small label and the muted caption. */
-export const LABEL = "text-xs leading-4 font-bold tracking-[0.1em] uppercase"
+export const LABEL = "text-xs leading-4 font-medium tracking-normal"
 export const CAPTION = "text-xs leading-4 font-medium text-muted-foreground"
 /** Trims a text box to cap height and baseline, so a number centres optically beside an icon or between gaps. */
 export const CAP_TRIM = "leading-none [text-box:trim-both_cap_alphabetic]"
 /** A caps text link with an arrow ("Explore your sleep insights →", "View trend →"), the coach blue. */
 export const TEXT_LINK =
-  "relative inline-flex items-center gap-1.5 self-start rounded-md text-xs leading-4 font-bold tracking-[0.1em] text-coach-text uppercase underline-offset-4 outline-none after:absolute after:-inset-x-1 after:-inset-y-3.5 hover:underline focus-visible:ring-3 focus-visible:ring-ring/50"
+  "relative inline-flex items-center gap-1.5 self-start rounded-md text-xs leading-4 font-medium tracking-normal text-coach-text underline-offset-4 outline-none after:absolute after:-inset-x-1 after:-inset-y-3.5 hover:underline focus-visible:ring-3 focus-visible:ring-ring/50"
 /** The 48 px secondary button at a card's foot ("+ Add activity", "Behaviour insights", "Edit alarm"). */
 export const CARD_BUTTON =
-  "flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-secondary text-[13px] leading-4 font-bold tracking-[0.1em] uppercase transition-[background-color,scale] duration-150 ease-standard outline-none hover:bg-accent focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.96]"
+  "flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-secondary text-[13px] leading-4 font-medium tracking-normal transition-[background-color,scale] duration-150 ease-standard outline-none hover:bg-accent focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.96]"
 
 /** The W / M / 6M segmented control: its track and one segment (on: `data-[state=on]` or `aria-[current=page]`). */
 export const SEGMENT_TRACK = "flex shrink-0 gap-0.5 rounded-lg bg-muted p-0.5"
@@ -41,7 +41,7 @@ export function Tag({ kind, className }: { kind: TagKind; className?: string }) 
     <Badge
       variant="outline"
       className={cn(
-        "h-5 rounded-full border-border px-2 text-[11px] font-bold tracking-[0.1em] text-foreground-secondary uppercase",
+        "h-5 rounded-full border-border px-2 text-[11px] font-medium tracking-normal text-foreground-secondary",
         className
       )}
     >

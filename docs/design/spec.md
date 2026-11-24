@@ -2972,6 +2972,20 @@ Open items for U12/U13 (not design changes): the `button.tsx` sizes edit (§5.0)
 
 Open items for U17 (not design changes): `src/lib/header-state.ts` with its unit test, `getWearStreak()`, the `--glass-*` and orb tokens, retiring shadcn `Sidebar` from `AppShell`, and `InfoDialog`.
 
+
+**Linear restyle rows (LN).** The visual language moves from the reference app's to Linear's (2026-11-23, owner's
+request). Layout, kit components, data colours as a channel and every metric state are unchanged; these rows override
+the token, type and chrome rows they name.
+
+| # | Was | Now | Why |
+|---|---|---|---|
+| LN1 | §2.1 ground: slate gradient `#1d2529 → #101518`; light `#f6f8f9 → #e9edf0` | Flat content ground `#0f1011` (light `#fbfbfc`) and a darker `--sidebar` (`#08090a`, light `#f3f4f6`) for the navigation column | Linear's chrome: a flat panel beside a darker navigation column, no gradients |
+| LN2 | §2.2 surfaces: lifted cards with an inset top edge; actions white with ink | Cards `#151619` (light white) with a 1 px hairline (`--card-shadow`); actions in Linear's indigo `#5e6ad2` (`--primary`, `--key-*`, `--ring`) | Linear separates surfaces with hairlines, and its one accent marks actions and focus |
+| LN3 | §2.3 data colours: the reference app's saturated green / yellow / red, strain blue, teal optimal | Linear's status hues: green `#4cb782`, yellow `#f2c94c`, red `#eb5757`, blue `#4ea7fc`, orange `#f2994a`; light deepened for text | Same meanings and bands; Linear's palette, still ≥ 4.5 : 1 for text variants |
+| LN4 | §3 type: Figtree text, Barlow numerals (D3); caps labels at 0.1em tracking | Inter for both (optical size axis, `cv01`/`ss03`, tabular numerals); labels in sentence case at medium weight | Linear's typography; caps labels were the reference app's signature |
+| LN5 | §2.4 radii: chips 8, buttons 12, cards 16, sheets 28 | Chips 4, inputs 6, rows and buttons 8, cards 10, panels 12, sheets 16 | Linear's tighter corners |
+| LN6 | §4.2 floating glass rail and sidebar with a light-pool lens | Flush, full-height rail (96 px) and sidebar (244 px) on `--sidebar` with a right hairline; 32 px rows, 16 px icons, a flat tint for the current item; the phone tab bar keeps its float on a flat panel | Linear's sidebar; the 112 / 256 px content offsets are unchanged, so every panel keeps its place |
+
 ---
 
 ## 12. Inferred decisions and coverage gaps

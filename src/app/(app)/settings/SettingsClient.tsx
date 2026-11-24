@@ -208,7 +208,7 @@ export function DeleteAccountButton() {
       <Button
         variant="ghost"
         // Outlined in red: easy to find, clearly destructive, still quieter than the everyday buttons above.
-        className="h-11 rounded-full px-5 text-[13px] font-bold tracking-[0.06em] text-recovery-red-text uppercase ring-1 ring-recovery-red/45 hover:bg-recovery-red/10 hover:text-recovery-red-text"
+        className="h-11 rounded-full px-5 text-[13px] font-medium tracking-normal text-recovery-red-text ring-1 ring-recovery-red/45 hover:bg-recovery-red/10 hover:text-recovery-red-text"
         onClick={() => setOpen(true)}
       >
         Delete account
@@ -358,7 +358,7 @@ export function ThemePicker() {
   return (
     <fieldset>
       <legend className="sr-only">Theme</legend>
-      <div className="grid grid-cols-3 gap-1 rounded-[14px] bg-field p-1">
+      <div className="grid grid-cols-3 gap-1 rounded-lg bg-field p-1">
         {THEMES.map(({ value, label, Icon }) => (
           <label key={value} className="relative">
             <input

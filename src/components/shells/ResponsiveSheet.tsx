@@ -32,13 +32,13 @@ export type ResponsiveSheetProps = {
 
 /** Sheet material (spec §2.6): opaque dark gradient, a lit 1 px top edge. Not glass: sheets hold content. */
 const SHEET = "bg-linear-to-b from-sheet to-sheet-bottom shadow-sheet"
-const TITLE = "text-[15px] leading-5 font-bold tracking-[0.1em] text-balance uppercase"
+const TITLE = "text-[15px] leading-5 font-medium tracking-normal text-balance"
 const DESCRIPTION = "text-xs leading-4 font-medium text-muted-foreground"
 const CLOSE = "shrink-0 text-foreground hover:bg-foreground/8"
 
 /** A caps section label with a hairline running to the edge, as the reference app's "TIME ───" [latest-sheet-edit-1]. */
 export const SHEET_SECTION =
-  "flex items-center gap-3 text-xs leading-4 font-bold tracking-[0.1em] text-muted-foreground uppercase after:h-px after:flex-1 after:bg-foreground/10"
+  "flex items-center gap-3 text-xs leading-4 font-medium tracking-normal text-muted-foreground after:h-px after:flex-1 after:bg-foreground/10"
 
 /**
  * Tasks (check-in, vital and contributor detail): a bottom drawer below 768 px, a floating right
@@ -93,7 +93,7 @@ export function ResponsiveSheet({ open, onOpenChange, title, description, childr
             "flex flex-col gap-0 overflow-hidden p-0 text-base ring-0",
             // The whole phone (safe areas inside); from 768 px a centred panel, as tall as the window allows.
             "inset-0 top-0 left-0 h-svh max-w-none translate-x-0 translate-y-0 rounded-none pt-[env(safe-area-inset-top)]",
-            "md:inset-auto md:top-1/2 md:left-1/2 md:h-[min(880px,calc(100svh-48px))] md:w-[560px] md:max-w-[calc(100%-48px)] md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-[28px] md:pt-2",
+            "md:inset-auto md:top-1/2 md:left-1/2 md:h-[min(880px,calc(100svh-48px))] md:w-[560px] md:max-w-[calc(100%-48px)] md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-[14px] md:pt-2",
             glow && !done && "bg-linear-to-b from-glow-sand via-sheet via-45% to-sheet-bottom"
           )}
         >
@@ -131,7 +131,7 @@ export function ResponsiveSheet({ open, onOpenChange, title, description, childr
         <DrawerContent
           className={cn(
             SHEET,
-            "border-t-0 data-[vaul-drawer-direction=bottom]:max-h-[92svh] data-[vaul-drawer-direction=bottom]:rounded-t-[28px] [&>div:first-child]:mt-2.5 [&>div:first-child]:h-1.5 [&>div:first-child]:w-10 [&>div:first-child]:bg-foreground/25",
+            "border-t-0 data-[vaul-drawer-direction=bottom]:max-h-[92svh] data-[vaul-drawer-direction=bottom]:rounded-t-[16px] [&>div:first-child]:mt-2.5 [&>div:first-child]:h-1.5 [&>div:first-child]:w-10 [&>div:first-child]:bg-foreground/25",
             size === "tall" && "data-[vaul-drawer-direction=bottom]:h-[92svh]",
             // Reduced motion: vaul's slide becomes a 120 ms fade (its own fadeIn / fadeOut keyframes), as every overlay does (spec §2.7).
             "motion-reduce:[animation-duration:120ms]! motion-reduce:data-[state=open]:[animation-name:fadeIn]! motion-reduce:data-[state=closed]:[animation-name:fadeOut]!"
@@ -161,7 +161,7 @@ export function ResponsiveSheet({ open, onOpenChange, title, description, childr
         }}
         className={cn(
           SHEET,
-          "gap-0 border-l-0 pt-4 data-[side=right]:inset-y-3 data-[side=right]:right-3 data-[side=right]:h-auto data-[side=right]:w-[420px] data-[side=right]:max-w-[calc(100%-24px)] data-[side=right]:rounded-[28px] data-[side=right]:sm:max-w-[420px]"
+          "gap-0 border-l-0 pt-4 data-[side=right]:inset-y-3 data-[side=right]:right-3 data-[side=right]:h-auto data-[side=right]:w-[420px] data-[side=right]:max-w-[calc(100%-24px)] data-[side=right]:rounded-[14px] data-[side=right]:sm:max-w-[420px]"
         )}
       >
         {header(SheetTitle, SheetDescription, SheetClose, "end")}

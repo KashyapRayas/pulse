@@ -1,4 +1,4 @@
-// Ports TrainingLoadEngine.kt: CTL/ATL/TSB as EWMAs of daily Effort (same units as the load, not TRIMP),
+// Ports TrainingLoadEngine.kt: CTL/ATL/TSB as EWMAs of daily load in the caller's units (readiness passes linear TRIMP),
 // over the longest gap-free suffix ending on the target day. Seeded from the mean of the first primeDays.
 import { isoEpochDay } from "./baselines";
 

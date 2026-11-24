@@ -103,7 +103,7 @@ export function DetailHeaderRow({
           ) : (
             <>
               <h1 className={cn(HEADER_TITLE, "max-w-full truncate")}>{title}</h1>
-              {subtitle && <p className="max-w-full truncate text-[11px] leading-4 font-semibold tracking-[0.1em] text-muted-foreground uppercase">{subtitle}</p>}
+              {subtitle && <p className="max-w-full truncate text-[11px] leading-4 font-medium tracking-normal text-muted-foreground">{subtitle}</p>}
             </>
           )}
         </div>

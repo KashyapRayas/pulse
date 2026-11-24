@@ -1,6 +1,10 @@
-// Ports StrainScorer.kt: cardiovascular load ("Effort") on a 0–100 log scale from Karvonen %HRR and
-// Edwards (default) or Banister TRIMP. Not ported: denominator fitting against the reference app references and the
-// diagnostic trace lines.
+// Ports StrainScorer.kt: cardiovascular load ("Effort") on a 0–100 log scale from Karvonen %HRR and a zone TRIMP
+// (default) or Banister TRIMP. The zone TRIMP uses Edwards' 1–5 weights, but on heart-rate reserve: Edwards (1993)
+// set his zones on % of HRmax, so this is "zone TRIMP on %HRR", not Edwards' method. Not ported: denominator fitting
+// against the reference app references and the diagnostic trace lines.
+//
+// Effort is a log of TRIMP, so it is for display only. Ratios and sums of load (ACWR, monotony, CTL/ATL/TSB) run on
+// linear TRIMP: `trimpFromEffort` inverts the map.
 import type { HrSample } from "./types";
 
 /** Dense gate (≈10 min at 1 Hz). */
@@ -17,7 +21,9 @@ export const defaultAge = 30;
 export const defaultRestingHR = 60.0;
 export const hrmaxMinSamples = 600;
 export const hrmaxPercentile = 99.5;
+/** Banister TRIMP weighting y = k·e^(b·x): men k 0.64, b 1.92; women k 0.86, b 1.67 (Morton, Fitz-Clarke & Banister 1990). */
 export const banisterScale = 0.64;
+export const banisterScaleWomen = 0.86;
 export const banisterBMen = 1.92;
 export const banisterBWomen = 1.67;
 /** %HRR treated as no effort under Banister (the one tuned constant). */
@@ -25,7 +31,7 @@ export const banisterSedentaryHRR = 0.1;
 /** Longest span one reading may be credited with, minutes. */
 export const maxSampleGapMin = 2.0;
 
-/** (%HRR threshold, weight), highest first. */
+/** (%HRR threshold, weight), highest first: Edwards' weights on heart-rate reserve (see the header). */
 export const edwardsZones: readonly [number, number][] = [
   [90.0, 5],
   [80.0, 4],
@@ -42,26 +48,38 @@ export const effortFromStrainScale = (value: number): number => value * (maxStra
 /** Effort 0–100 → the reference app's 0–21 Day Strain axis. */
 export const toStrainScale = (effort: number): number => (effort * strainScaleMax) / maxStrain;
 
-export const banisterDailyCeiling = (b: number): number => 24.0 * 60.0 * 1.0 * banisterScale * Math.exp(b);
+/** Inverse of trimpToStrain on the default denominator: the linear TRIMP an Effort stands for (0 for null or ≤ 0). */
+export function trimpFromEffort(effort: number | null | undefined, denominator = strainDenominator): number {
+  if (effort == null || !(effort > 0)) return 0.0;
+  return Math.exp((effort / maxStrain) * Math.log(denominator)) - 1.0;
+}
 
-export const banisterBaselineRatePerMinute = (b: number): number =>
-  banisterScale * banisterSedentaryHRR * Math.exp(b * banisterSedentaryHRR);
+const isFemale = (sex: string): boolean => sex.toLowerCase().startsWith("f");
+const banisterB = (sex: string): number => (isFemale(sex) ? banisterBWomen : banisterBMen);
+const banisterK = (sex: string): number => (isFemale(sex) ? banisterScaleWomen : banisterScale);
+/** The k that goes with a b: 0.86 with the women's 1.67, else the men's 0.64. */
+const kFor = (b: number): number => (b === banisterBWomen ? banisterScaleWomen : banisterScale);
 
-export const banisterBaseline = (minutes: number, b: number): number => banisterBaselineRatePerMinute(b) * minutes;
+export const banisterDailyCeiling = (b: number, k: number = kFor(b)): number => 24.0 * 60.0 * 1.0 * k * Math.exp(b);
 
-const banisterB = (sex: string): number => (sex.toLowerCase().startsWith("f") ? banisterBWomen : banisterBMen);
+export const banisterBaselineRatePerMinute = (b: number, k: number = kFor(b)): number =>
+  k * banisterSedentaryHRR * Math.exp(b * banisterSedentaryHRR);
+
+export const banisterBaseline = (minutes: number, b: number, k: number = kFor(b)): number => banisterBaselineRatePerMinute(b, k) * minutes;
 
 /** The log-map denominator that belongs to a method. */
 export function logMapDenominator(method: StrainMethod, sex: string): number {
   if (method === "edwards") return strainDenominator;
   const b = banisterB(sex);
-  return banisterDailyCeiling(b) - banisterBaseline(24.0 * 60.0, b) + 1.0;
+  const k = banisterK(sex);
+  return banisterDailyCeiling(b, k) - banisterBaseline(24.0 * 60.0, b, k) + 1.0;
 }
 
 /** Tanaka (2001): 208 − 0.7 × age. */
 export const tanakaHRmax = (age: number): number => 208.0 - 0.7 * age;
 
-export const defaultMaxHR = (age: number = defaultAge): number => 220 - age;
+/** Tanaka, the current standard; 220 − age (Fox) overestimates HRmax in younger and underestimates it in older adults. */
+export const defaultMaxHR = (age: number = defaultAge): number => tanakaHRmax(age);
 
 /** Linear-interpolated percentile of a sorted array (numpy-style). */
 export function percentile(sortedValues: number[], pct: number): number {
@@ -143,12 +161,13 @@ export function banisterTRIMP(
   durations: number[],
   b: number,
   floorRatePerMinute = 0.0,
+  k: number = kFor(b),
 ): number {
   let acc = 0.0;
   for (let i = 0; i < hr.length; i++) {
     const x = pctHRR(hr[i].bpm, restingHR, hrReserve) / 100.0;
     if (x > 0) {
-      const rate = x * banisterScale * Math.exp(b * x);
+      const rate = x * k * Math.exp(b * x);
       acc += durations[i] * Math.max(rate - floorRatePerMinute, 0.0);
     }
   }
@@ -196,7 +215,7 @@ export function strain(
   const hrReserve = effMax - restingHR;
   const trimp =
     method === "banister"
-      ? banisterTRIMP(hr, restingHR, hrReserve, durations, banisterB(sex), banisterBaselineRatePerMinute(banisterB(sex)))
+      ? banisterTRIMP(hr, restingHR, hrReserve, durations, banisterB(sex), banisterBaselineRatePerMinute(banisterB(sex), banisterK(sex)), banisterK(sex))
       : edwardsTRIMP(hr, restingHR, hrReserve, durations);
   return trimpToStrain(trimp, resolvedDenominator);
 }

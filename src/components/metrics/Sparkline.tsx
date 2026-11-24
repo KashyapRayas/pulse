@@ -38,7 +38,7 @@ export function Sparkline({ values, band, color = "var(--foreground-secondary)",
           style={{ left: `${x(lastI)}%`, top: `${y(values[lastI]!)}%`, background: color }}
         />
       </div>
-      {caption && <span className="text-right text-[10px] leading-3 font-semibold tracking-[0.06em] text-muted-foreground uppercase">{caption}</span>}
+      {caption && <span className="text-right text-[10px] leading-3 font-medium tracking-normal text-muted-foreground">{caption}</span>}
     </div>
   )
 }

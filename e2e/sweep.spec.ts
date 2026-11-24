@@ -22,6 +22,8 @@ const OTHER_ROUTES = [
   "/trend/consistency",
   "/trend/time_in_bed?r=w",
   "/trend/zones13?r=m",
+  "/trend/mvpa?r=m",
+  "/trend/vigorous?r=6m",
   "/trend/strength?r=6m",
   "/trend/strain?r=w&p=1",
   "/metric/hrv",

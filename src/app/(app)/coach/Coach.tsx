@@ -198,7 +198,7 @@ function UserMessage({ m, busy, onEdit }: { m: UIMessage; busy: boolean; onEdit:
           }}
           rows={1}
           maxLength={2000}
-          className="field-sizing-content block max-h-60 min-h-11 w-full resize-none rounded-[20px] bg-secondary px-4 py-2.5 text-[16px] leading-6 text-foreground caret-coach ring-1 ring-foreground/20 outline-none focus-visible:ring-foreground/35 md:text-[15px]"
+          className="field-sizing-content block max-h-60 min-h-11 w-full resize-none rounded-xl bg-secondary px-4 py-2.5 text-[16px] leading-6 text-foreground caret-coach ring-1 ring-foreground/20 outline-none focus-visible:ring-foreground/35 md:text-[15px]"
         />
         <div className="flex justify-end gap-2">
           <Button type="button" variant="ghost" onClick={() => setDraft(null)} className="h-9 rounded-full px-4 text-[13px] font-semibold pointer-coarse:h-10">
@@ -215,7 +215,7 @@ function UserMessage({ m, busy, onEdit }: { m: UIMessage; busy: boolean; onEdit:
       <Button type="button" variant="ghost" size="icon-lg" aria-label="Edit message" disabled={busy} onClick={() => setDraft(text)} className={cn(ACTION, REVEAL, "mt-0.5 shrink-0")}>
         <Pencil aria-hidden strokeWidth={1.75} className="size-4" />
       </Button>
-      <p className="min-w-0 rounded-[20px] rounded-br-md bg-secondary px-4 py-2.5 text-[15px] leading-6 break-words whitespace-pre-wrap text-foreground">{text}</p>
+      <p className="min-w-0 rounded-xl rounded-br-md bg-secondary px-4 py-2.5 text-[15px] leading-6 break-words whitespace-pre-wrap text-foreground">{text}</p>
     </div>
   )
 }
@@ -388,7 +388,7 @@ export function Coach({ id, initial, groups, next, prefill, auto, suggestions }:
   return (
     <div data-chats={listOpen ? "open" : "closed"} className="flex min-h-0 flex-1 flex-col">
       {listOpen ? (
-        <aside data-fixed-panel aria-label="Chats panel" className={cn(GLASS, "fixed top-[calc(var(--inset-top)+12px)] bottom-3 left-[112px] z-30 hidden w-[272px] flex-col rounded-[28px] p-3 xl:flex")}>
+        <aside data-fixed-panel aria-label="Chats panel" className={cn(GLASS, "fixed top-[calc(var(--inset-top)+12px)] bottom-3 left-[112px] z-30 hidden w-[272px] flex-col rounded-[14px] p-3 xl:flex")}>
           <div className="flex h-14 shrink-0 items-center justify-between gap-1 pl-3">
             <h2 className="text-[15px] leading-5 font-semibold">Chats</h2>
             <span className="flex items-center">
@@ -405,7 +405,7 @@ export function Coach({ id, initial, groups, next, prefill, auto, suggestions }:
           </div>
         </aside>
       ) : (
-        <aside data-fixed-panel aria-label="Chats panel" className={cn(GLASS, "fixed top-[calc(var(--inset-top)+12px)] bottom-3 left-[112px] z-30 hidden w-16 flex-col items-center gap-1 rounded-[28px] py-3 xl:flex")}>
+        <aside data-fixed-panel aria-label="Chats panel" className={cn(GLASS, "fixed top-[calc(var(--inset-top)+12px)] bottom-3 left-[112px] z-30 hidden w-16 flex-col items-center gap-1 rounded-[14px] py-3 xl:flex")}>
           <Button variant="ghost" size="icon-touch" aria-label="Expand chats" aria-expanded={false} onClick={() => setPanelOpen(true)} className={PANEL_BTN}>
             <PanelLeftOpen aria-hidden strokeWidth={1.6} />
           </Button>
@@ -483,7 +483,7 @@ export function Coach({ id, initial, groups, next, prefill, auto, suggestions }:
             }}
             className={cn(
               GLASS,
-              "flex items-end gap-1.5 rounded-[28px] p-1.5 transition-[box-shadow] duration-150 ease-standard has-[textarea:focus-visible]:ring-foreground/25",
+              "flex items-end gap-1.5 rounded-[14px] p-1.5 transition-[box-shadow] duration-150 ease-standard has-[textarea:focus-visible]:ring-foreground/25",
             )}
           >
             <label htmlFor="coach-input" className="sr-only">

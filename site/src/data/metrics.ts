@@ -185,10 +185,10 @@ const META: Record<string, Meta> = {
     sources: [S.noop, S.phillips2017],
     related: ["sleep-planner", "sleep-consistency", "recovery"],
     faq: [
-      { q: "How much sleep do I need?", a: "Pulse does not use a fixed figure. Your sleep need is the upper quartile of your last 28 nights, which is the amount you manage on your better nights, held between 8 and 9.5 hours (9 to 9.5 under 18). Until it has 7 nights it uses 8 hours. It is a statistical estimate from your own habits, not a medical measurement, so a persistent need for much more sleep is worth raising with a doctor." },
+      { q: "How much sleep do I need?", a: "Pulse does not use a fixed figure. Your sleep need is the upper quartile of your last 28 nights, which is the amount you manage on your better nights, held between 7 and 9.5 hours: the AASM's adult minimum of 7 hours is the floor (8 for ages 13 to 17, 9 under 13). Until it has 7 nights it uses 8 hours. It is a statistical estimate from your own habits, not a medical measurement, so a persistent need for much more sleep is worth raising with a doctor." },
       { q: "What is a good Sleep Performance score?", a: "In Pulse, 85% and above is Optimal, 70 to 84% is Sufficient, and below 70% is Poor. Hitting 100% needs enough hours, high efficiency, plenty of deep and REM sleep and a regular schedule on the same night, so most nights lose a few points somewhere. A run of scores in the 80s is a normal, healthy pattern. Judge the weekly trend, not a single night." },
       { q: "How is this different from Google Health's Sleep Score?", a: "Google's Sleep Score combines six parts: duration, time to sound sleep, sound sleep, restlessness, full awakenings and interruptions. It does not publish weights, and the Google Health API does not expose it, so Pulse cannot show it. Pulse computes its own score from four published parts, with 50% on hours against your personal need. The two numbers are not interchangeable. <a href=\"/blog/fitbit-sleep-score-explained/\">Fitbit sleep score explained</a> covers Google's version." },
-      { q: "Why is my Sleep Performance low when I slept 8 hours?", a: "Hours are only half the score. Low efficiency, little deep or REM sleep, or an irregular week can each pull it down, and a night with no stage data scores its restorative part as zero. Your personal need can also sit above 8 hours. Stages come from a wrist sensor and are an estimate, so the restorative part is the least certain." },
+      { q: "Why is my Sleep Performance low when I slept 8 hours?", a: "Hours are only half the score. Low efficiency, little deep or REM sleep, or an irregular week can each pull it down, and a night with no stage data leaves its restorative part out rather than scoring it zero. Your personal need can also sit above 8 hours. Stages come from a wrist sensor and are an estimate, so the restorative part is the least certain." },
     ],
   },
   "sleep-planner": {
@@ -200,7 +200,7 @@ const META: Record<string, Meta> = {
     related: ["sleep", "sleep-consistency", "strain"],
     faq: [
       { q: "What time should I go to bed?", a: "It depends on when you need to wake and how much sleep you need. Pulse takes your usual wake time for the coming morning, from your recent weekdays or weekends, then subtracts tonight's need divided by your typical sleep efficiency. For an 8-hour need, a 07:00 wake and 90% efficiency, that is 22:07. It cannot see alarms or plans, so check the wake time it assumes." },
-      { q: "How does sleep debt work in the planner?", a: "Pulse runs a ledger over your last 14 nights with sleep. Each night, the debt becomes 55% of your need plus the debt so far, minus the sleep you got, with naps credited. Debt under 10 minutes clears to zero. Tonight's planner adds 20% of the current debt to your need, so a large debt is repaid over about five nights instead of in one long night." },
+      { q: "How does sleep debt work in the planner?", a: "Pulse runs a ledger over your last 14 nights with sleep. Each night, the whole shortfall is added, and what you already owed carries at 80%, so debt builds up over a run of short nights, as it does in sleep-restriction studies. Sleep beyond your need repays it, naps included. Debt under 10 minutes clears to zero. Tonight's planner adds 20% of the current debt to your need, at most an hour, so a large debt is repaid over several nights." },
       { q: "How is this different from WHOOP's Sleep Planner?", a: "The idea is the same: a need built from a baseline, extra for strain and debt, less for naps, turned into bedtimes at 100%, 85% and 70% of the need. WHOOP does not publish its amounts. Pulse does: 3 minutes per Strain point above your 28-day average, 20% of debt, and a baseline from your own upper-quartile nights. See <a href=\"/blog/whoop-sleep-need-explained/\">WHOOP sleep need explained</a>." },
       { q: "Why does the planner show no bedtime?", a: "It needs 7 main sleeps in your history before it gives bedtimes, because the wake time and efficiency come from your recent nights. Until then it only has a default need of 8 hours. A very long nap can also bring tonight's need close to zero. The planner is a guide for scheduling, not a prescription." },
     ],
@@ -236,7 +236,7 @@ const META: Record<string, Meta> = {
       },
       {
         q: "Why is my Pulse Age older than my real age?",
-        a: "The reference is a fit person of your age and sex, not an average one, so many people start older than their age. Steps, VO2 max and time in heart-rate zones usually move it most.",
+        a: "The reference is a typical person of your age and sex who meets the activity guidelines: a median VO2 max for your age, about 8,000 steps a day (6,000 from 60) and 150 minutes a week of moderate or harder activity. So an average person scores about their own age. VO2 max, steps and activity minutes usually move it most.",
       },
     ],
   },
@@ -289,11 +289,11 @@ const META: Record<string, Meta> = {
       max: 100,
       unit: "th",
       bands: [
-        { from: 0, to: 19, label: "Poor", color: C.muted },
-        { from: 20, to: 39, label: "Fair", color: C.sleepDeep },
-        { from: 40, to: 59, label: "Good", color: C.sleep },
-        { from: 60, to: 79, label: "Excellent", color: C.strainText },
-        { from: 80, to: 100, label: "Superior", color: C.optimal },
+        { from: 0, to: 39, label: "Poor", color: C.muted },
+        { from: 40, to: 59, label: "Fair", color: C.sleepDeep },
+        { from: 60, to: 79, label: "Good", color: C.sleep },
+        { from: 80, to: 94, label: "Excellent", color: C.strainText },
+        { from: 95, to: 100, label: "Superior", color: C.optimal },
       ],
     },
     shot: "laptop-health",
@@ -303,7 +303,7 @@ const META: Record<string, Meta> = {
     ],
     related: ["pulse-age", "training-load", "hr-recovery"],
     faq: [
-      { q: "What is a good VO2 max for my age?", a: "In Pulse, Good starts at the 40th percentile for your age and sex and Superior at the 80th. For men aged 30 to 39 that means roughly 40 and 52 ml/kg/min, and for women aged 30 to 39 roughly 28 and 38. Those cut-offs come from the published lab table, which gives one set per decade of age." },
+      { q: "What is a good VO2 max for my age?", a: "Pulse uses the Cooper Institute's bands: Fair from the 40th percentile for your age and sex, Good from the 60th, Excellent from the 80th and Superior from the 95th. For men aged 30 to 39, Good starts at roughly 45 ml/kg/min and Superior at 60; for women aged 30 to 39, roughly 32 and 46. The values come from the published lab table, which gives one set per decade of age." },
       { q: "Why is my percentile lower than I expected?", a: "Two reasons. The table behind it (Kaminsky 2015) runs 1.5 to 4.6 ml/kg/min higher than its 2022 update, so you may place a little low. And Fitbit's value is an estimate from your runs and heart rate, while the table is lab-measured. A device that reads a few points high or low moves the percentile by several places." },
       { q: "Why is my Fitbit VO2 max marked Provisional?", a: "Pulse prefers the latest run value from the last 90 days. With no run in that window it falls back to Fitbit's latest daily estimate and marks it Provisional. Google says an outdoor run of about 10 minutes helps produce a reading, so a few outdoor runs are the usual way to replace a provisional number. See <a href=\"/blog/fitbit-vo2-max-accuracy/\">Fitbit VO2 max accuracy</a>." },
       { q: "How is this different from Google Health's Cardio Fitness Score?", a: "The Cardio Fitness Score is Google's estimate of your VO2 max, and it also sorts you into Poor to Excellent using Google's own age and sex tables. Pulse uses that number as input and does not re-estimate it. It then places it among lab-measured adults and returns a percentile with five bands, so the two labels can disagree even when the VO2 max is the same." },
@@ -311,7 +311,7 @@ const META: Record<string, Meta> = {
   },
   "training-balance": {
     title: "Training balance: acute:chronic workload ratio (ACWR)",
-    description: "Pulse compares your last 7 days of Strain with your last 28 to show whether your load is balanced, rising fast or dropping off.",
+    description: "Pulse compares your last 7 days of training load with the 3 weeks before them to show whether your load is balanced, rising fast or dropping off.",
     keywords: ["acute chronic workload ratio", "acwr calculator", "am i overtraining"],
     shot: "laptop-trends",
     scale: {
@@ -327,10 +327,10 @@ const META: Record<string, Meta> = {
     sources: [S.gabbett2016, S.impellizzeri2020, S.noop],
     related: ["training-load", "strain", "strain-target"],
     faq: [
-      { q: "How do I calculate my ACWR?", a: "Average your Strain over the last 7 days, average it over the last 28 days, and divide the first by the second. Pulse counts rest days with the band on as zero and skips days without it, and needs at least 14 days of data. A result near 1 means this week matches your usual. Pulse does this for you on the Fitness screen." },
+      { q: "How do I calculate my ACWR?", a: "Average your daily training load over the last 7 days, average it over the 21 days before them, and divide the first by the second. Pulse uses the linear heart-rate load (TRIMP) behind Strain, not the 0 to 21 Strain number itself, because Strain is a log scale and a ratio of logs hides a spike. Days without the band are skipped, and it needs at least 14 days of data. A result near 1 means this week matches your usual. Pulse does this for you on the Fitness screen." },
       { q: "Am I overtraining?", a: "A high ratio is a flag, not a diagnosis. From 1.30 Pulse calls the load Pushing, and from 1.50 High risk, because the last week is well above what you are used to. It cannot see sleep, illness or stress, and the 0.8 to 1.3 sweet spot comes from team-sport injury research and is a rule of thumb. If you feel unwell, see a doctor." },
-      { q: "How is this different from Garmin's Load Ratio?", a: "The idea is the same: short-term load divided by long-term load. Garmin's manuals call 0.8 to 1.4 optimal, do not say how many days each window covers, and measure load from EPOC. Pulse uses 7 days against 28, from heart-rate Strain, and bands it Balanced at 0.80 to 1.29. See <a href=\"/blog/garmin-load-ratio-acute-load/\">Garmin Load Ratio and Acute Load</a>." },
-      { q: "Is the acute to chronic workload ratio reliable?", a: "It is contested. Critics argue the acute week sits inside the chronic window, and that the ratio adds nothing over a model with no predictors in some re-analyses. Pulse uses it as a description of how your last week compares with your last month, not as a prediction. It compares you only with yourself and says nothing about whether your usual load suits your goals." },
+      { q: "How is this different from Garmin's Load Ratio?", a: "The idea is the same: short-term load divided by long-term load. Garmin's manuals call 0.8 to 1.4 optimal, do not say how many days each window covers, and measure load from EPOC. Pulse uses 7 days against the 21 before them, from the heart-rate load behind Strain, and bands it Balanced at 0.80 to 1.29. See <a href=\"/blog/garmin-load-ratio-acute-load/\">Garmin Load Ratio and Acute Load</a>." },
+      { q: "Is the acute to chronic workload ratio reliable?", a: "It is contested. Critics argue the acute week should not sit inside the chronic window, so Pulse keeps them apart, and that the ratio adds nothing over a model with no predictors in some re-analyses. Pulse uses it as a description of how your last week compares with your last month, not as a prediction. It compares you only with yourself and says nothing about whether your usual load suits your goals." },
     ],
   },
   "journal-impact": {

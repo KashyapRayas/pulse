@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Barlow, Figtree } from "next/font/google";
+import { Inter } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { PwaRuntime } from "@/components/pwa/PwaRuntime"
 import { SW_SCRIPT } from "@/lib/sw"
@@ -10,16 +10,18 @@ import launchScreens from "./launch-screens.json"
 import "./globals.css";
 
 // next/font self-hosts at build time (no runtime requests to Google Fonts).
-// Figtree stands in for the reference app's Proxima Nova (text); Barlow for DIN 2014 (numerals). See docs/design/spec.md §3.
-const figtree = Figtree({
+// Inter for text and numerals, as Linear sets it: the optical-size axis gives display cuts at large sizes, and
+// globals.css turns on its cv01 / ss03 features and tabular numerals.
+const inter = Inter({
   variable: "--font-sans",
   subsets: ["latin"],
+  axes: ["opsz"],
 });
 
-const barlow = Barlow({
+const interNumeric = Inter({
   variable: "--font-numeric",
-  weight: ["500", "600", "700"],
   subsets: ["latin"],
+  axes: ["opsz"],
 });
 
 // iOS shows no launch screen unless one matches the device exactly: every iPhone and iPad, both orientations and both
@@ -57,8 +59,8 @@ export const viewport: Viewport = {
   interactiveWidget: "resizes-content",
   // First paint only; ThemeColor follows the theme and the page's ground from there. Values mirror --theme-color.
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f6f8f9" },
-    { media: "(prefers-color-scheme: dark)", color: "#1d2529" },
+    { media: "(prefers-color-scheme: light)", color: "#fbfbfc" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f1011" },
   ],
   colorScheme: "dark light",
 };
@@ -68,7 +70,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${figtree.variable} ${barlow.variable} h-full scroll-pt-[calc(120px+var(--inset-top))] scroll-pb-[110px] antialiased md:scroll-pb-24`}
+      className={`${inter.variable} ${interNumeric.variable} h-full scroll-pt-[calc(120px+var(--inset-top))] scroll-pb-[110px] antialiased md:scroll-pb-24`}
     >
       <head>
         {/* Settings › Appearance (system, light or dark, per device). Inline and first in <head>, so the class is on <html>

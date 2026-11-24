@@ -66,7 +66,7 @@ const COMPACT = { box: "size-16", d: 64, ring: 5, value: "text-[40cqi]" } as con
 // Each text box is trimmed to cap height and baseline, so the cqi gaps between rows are the visible gaps.
 const TRIM = CAP_TRIM
 
-const DIAL_LABEL = "text-xs leading-4 font-bold tracking-[0.1em] uppercase"
+const DIAL_LABEL = "text-xs leading-4 font-medium tracking-normal"
 const STATUS_LIT = { poor: "bg-warning", sufficient: "bg-foreground-secondary", optimal: "bg-optimal" } as const
 const TRACK = "var(--dial-track)"
 // Every current ring opens with a 4° gap each side of 12 o'clock ([latest-recovery-1], [latest-home-top-1]).

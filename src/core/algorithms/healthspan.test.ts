@@ -16,15 +16,15 @@ const today = isoEpochDay(asOf)!;
 const iso = (epochDay: number) => new Date(epochDay * 86_400_000).toISOString().slice(0, 10);
 const profile: HealthspanProfile = { age: 35, sex: "male", heightCm: 180 };
 const ref = referenceProfile(35, "male");
-/** ln HR → years: shrink × renormalization ÷ (ln 2 / 8). All nine terms present unless stated. */
-const years = (lnHr: number, present = 9) => (lnHr * 0.75 * (9 / present)) / (Math.LN2 / 8);
+/** ln HR → years: shrink ÷ (ln 2 / 8). A missing input adds nothing, so there is no renormalization. */
+const years = (lnHr: number) => (lnHr * 0.75) / (Math.LN2 / 8);
 
 /** A day exactly at the reference profile: FFMI 18.9 at 1.80 m and 20 % body fat. */
 const refDay = (): Omit<HealthspanDay, "day"> => ({
   sleepHours: ref.sleepHours,
   sri: ref.sri,
-  zone13Min: ref.zone13 / 7,
-  zone45Min: ref.zone45 / 7,
+  mvpaMin: ref.mvpa / 7,
+  vigorousMin: ref.vigorous / 7,
   strengthMin: ref.strength / 7,
   steps: ref.steps,
   vo2maxRun: ref.vo2max,
@@ -58,11 +58,11 @@ describe("Pulse Age", () => {
     expect(r.deltaYears).toBeCloseTo(0.75, 2);
   });
 
-  it("missing lean mass drops the term and renormalizes the other eight", () => {
+  it("missing lean mass drops the term without inflating the other eight", () => {
     const r = run(series(180, () => ({ restingHr: 70 })), { ...profile, heightCm: null });
     expect(r.contributions.map((c) => c.key)).not.toContain("leanMass");
     expect(r.contributions).toHaveLength(8);
-    expect(r.deltaYears).toBeCloseTo(years(Math.log(1.09), 8), 10);
+    expect(r.deltaYears).toBeCloseTo(years(Math.log(1.09)), 10);
     // Body fat without weight on any day drops it too.
     const r2 = run(series(180, () => ({ restingHr: 70, weightKg: null })));
     expect(r2.deltaYears).toBeCloseTo(r.deltaYears, 10);
@@ -76,12 +76,12 @@ describe("Pulse Age", () => {
 
   it("clamps to ±15 years", () => {
     const bad = run(
-      series(180, () => ({ vo2maxRun: 15, restingHr: 100, steps: 2000, sleepHours: 4, sri: 40, zone13Min: 0, zone45Min: 0, strengthMin: 0 })),
+      series(180, () => ({ vo2maxRun: 15, restingHr: 100, steps: 2000, sleepHours: 4, sri: 40, mvpaMin: 0, vigorousMin: 0, strengthMin: 0 })),
     );
     expect(bad.pulseAge).toBe(50);
     expect(bad.deltaYears).toBe(15);
     const old: HealthspanProfile = { age: 75, sex: "male", heightCm: 180 };
-    const good = run(series(180, () => ({ vo2maxRun: 80, restingHr: 45, zone13Min: 60, zone45Min: 60, sri: 95, weightKg: 90 })), old);
+    const good = run(series(180, () => ({ vo2maxRun: 80, restingHr: 45, mvpaMin: 60, vigorousMin: 60, sri: 95, weightKg: 90 })), old);
     expect(good.pulseAge).toBe(60);
   });
 
@@ -158,8 +158,8 @@ describe("Pace of Aging", () => {
   });
 
   it("stays within [−1, 3]", () => {
-    const awful = { vo2maxRun: 15, restingHr: 100, steps: 2000, sleepHours: 4, sri: 40, zone13Min: 0, zone45Min: 0, strengthMin: 0 };
-    const great = { vo2maxRun: 70, restingHr: 45, zone13Min: 60, zone45Min: 60, sri: 95 };
+    const awful = { vo2maxRun: 15, restingHr: 100, steps: 2000, sleepHours: 4, sri: 40, mvpaMin: 0, vigorousMin: 0, strengthMin: 0 };
+    const great = { vo2maxRun: 70, restingHr: 45, mvpaMin: 60, vigorousMin: 60, sri: 95 };
     expect(run(series(180, (ago) => (ago < 30 ? great : awful))).paceOfAging).toBe(-1);
     expect(run(series(180, (ago) => (ago < 30 ? awful : great))).paceOfAging).toBe(3);
     for (let rhr = 40; rhr <= 110; rhr += 5) {
@@ -188,7 +188,7 @@ describe("dose-response curves", () => {
     return [lo - (hi - lo) * 0.2, hi + (hi - lo) * 0.2] as const;
   };
 
-  it.each(["vo2max", "steps", "sri", "zone13", "zone45", "leanMass"] as const)("%s never raises hazard as it rises", (key) => {
+  it.each(["vo2max", "steps", "sri", "mvpa", "vigorous", "leanMass"] as const)("%s never raises hazard as it rises", (key) => {
     const s = steps(key, ...span(key));
     for (const { d } of s) expect(d).toBeLessThanOrEqual(1e-12);
     expect(s.some(({ d }) => d < 0)).toBe(true);
@@ -223,8 +223,42 @@ describe("dose-response curves", () => {
     }
   });
 
-  it("steps beyond the age plateau earn nothing", () => {
-    expect(run(series(180, () => ({ steps: 15_000 }))).deltaYears).toBeCloseTo(0, 10);
-    expect(referenceProfile(65, "female").steps).toBe(healthspanConfig.stepsPlateau.from60);
+  it("steps beyond the age plateau earn nothing more; the reference is where the plateau starts", () => {
+    const atPlateau = run(series(180, () => ({ steps: healthspanConfig.stepsPlateau.under60 }))).deltaYears;
+    expect(atPlateau).toBeLessThan(0);
+    expect(run(series(180, () => ({ steps: 15_000 }))).deltaYears).toBeCloseTo(atPlateau, 10);
+    expect(referenceProfile(35, "male").steps).toBe(8_000);
+    expect(referenceProfile(65, "female").steps).toBe(healthspanConfig.stepsReference.from60);
+  });
+});
+
+describe("calibration against the age-typical person", () => {
+  it("the VO2max reference is the FRIEND median for age and sex", () => {
+    expect(referenceProfile(35, "male").vo2max).toBeCloseTo(42.4, 10);
+  });
+
+  it("strength never logged in 6 months is left out, not scored as zero minutes", () => {
+    const r = run(series(180, () => ({ strengthMin: 0 })));
+    expect(r.contributions.map((c) => c.key)).not.toContain("strength");
+    expect(r.deltaYears).toBeCloseTo(0, 10);
+    // One logged session puts the term back, with the weeks without strength counting.
+    const once = run(series(180, (ago) => ({ strengthMin: ago === 3 ? 45 : 0 })));
+    expect(once.contributions.find((c) => c.key === "strength")!.years).toBeGreaterThan(0);
+  });
+
+  it("vigorous minutes only add benefit on top of the WHO 150 minutes", () => {
+    expect(referenceProfile(35, "male").vigorous).toBe(0);
+    expect(run(series(180, () => ({ vigorousMin: 20 / 7 }))).deltaYears).toBeLessThan(0);
+  });
+
+  it("a population-median 40-year-old man scores about his own age (was 50.1 before v11)", () => {
+    const median = run(
+      series(180, () => ({
+        vo2maxRun: 37.8, restingHr: 65, steps: 7000, sleepHours: 6.9, sri: 81,
+        mvpaMin: 150 / 7, vigorousMin: 20 / 7, strengthMin: 0, weightKg: null, bodyFatPct: null,
+      })),
+      { age: 40, sex: "male" },
+    );
+    expect(Math.abs(median.deltaYears)).toBeLessThan(2);
   });
 });
